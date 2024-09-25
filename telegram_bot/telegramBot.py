@@ -160,7 +160,6 @@ def button_click_handler(update: Update, context: CallbackContext):
     if query.data == 'add_task' and task_data:
         # If the user confirmed, add the task to Google Sheet
         send_task_to_google_script(query, task_data)
-        query.edit_message_text(text="Task added successfully.")
     elif query.data == 'cancel_task':
         # If the user canceled
         query.edit_message_text(text="Task creation canceled.")
