@@ -214,7 +214,10 @@ def error_handler(update: Update, context: CallbackContext):
     update.message.reply_text('An unexpected error occurred. Please try again later.')
 
 def format_due_date(due_date_obj):
-    today = datetime.today()
+    # Normalize both dates to midnight to avoid time differences
+    today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+    due_date_obj = due_date_obj.replace(hour=0, minute=0, second=0, microsecond=0)
+
     days_difference = (due_date_obj - today).days
 
     if days_difference == 0:
@@ -225,6 +228,7 @@ def format_due_date(due_date_obj):
         return due_date_obj.strftime('%a, %b %d %Y') + f" ({days_difference} days from now)"
     else:
         return due_date_obj.strftime('%a, %b %d %Y') + f" ({abs(days_difference)} days ago)"
+
 
 # Modify the main function to include the new command handler and error handler
 def main():
