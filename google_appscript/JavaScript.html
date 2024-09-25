@@ -1,0 +1,189 @@
+<script>
+  // Handle form submission
+  function handleFormSubmit() {
+    const formData = getFormData();
+    toggleLoading(true);
+    animateEllipsis();
+
+    google.script.run
+      .withSuccessHandler(onSuccess)
+      .withFailureHandler(onFailure)
+      .createTask(formData);
+  }
+
+  // Get form data
+  function getFormData() {
+    const formData = {};
+    const elements = document.getElementById('taskForm').elements;
+
+    for (let i = 0; i < elements.length; i++) {
+      if (elements[i].name) {
+        formData[elements[i].name] = elements[i].value;
+      }
+    }
+
+    return formData;
+  }
+
+  // Show or hide the loading spinner and message
+  function toggleLoading(isLoading) {
+    const submitButton = document.getElementById('submitButton');
+    const loadingContainer = document.getElementById('loadingContainer');
+
+    submitButton.style.display = isLoading ? 'none' : 'block';
+    loadingContainer.style.display = isLoading ? 'flex' : 'none';
+  }
+
+  const ELLIPSIS_INTERVAL_MS = 200;
+  let ellipsisInterval = null;
+
+  // Animate ellipsis for "Adding new task..."
+  function animateEllipsis() {
+    const messageDiv = document.getElementById('message');
+    let dotCount = 1;
+
+    messageDiv.innerText = "Adding new task";
+
+    ellipsisInterval = setInterval(() => {
+      dotCount = (dotCount + 1) % 4; // cycle between 0, 1, 2, 3 dots
+      messageDiv.innerText = "Adding new task" + ".".repeat(dotCount);
+    }, ELLIPSIS_INTERVAL_MS);
+  }
+
+  // Stop ellipsis animation
+  function stopEllipsis() {
+    clearInterval(ellipsisInterval);
+    ellipsisInterval = null;
+  }
+
+  // Handle task creation success
+  function onSuccess() {
+    console.log('Task successfully created!');
+
+    // Stop ellipsis animation
+    stopEllipsis();
+
+    // Hide loading spinner
+    toggleLoading(false);
+
+    // Close the dialog
+    google.script.host.close();
+  }
+
+  // Handle task creation failure
+  function onFailure(error) {
+    const messageDiv = document.getElementById('message');
+    console.error('Task creation failed: ', error);
+    stopEllipsis();
+
+    messageDiv.innerText = 'Task creation failed: ' + error;
+    toggleLoading(false);  // Show the form again on failure
+  }
+
+  // Dropdown toggle for date picker
+  document.getElementById('datePickerToggle').addEventListener('click', function (event) {
+    const container = document.querySelector('.due-date-container');
+    const caret = document.getElementById('caret');
+
+    container.classList.toggle('open');
+
+    // Toggle the caret icon direction
+    if (container.classList.contains('open')) {
+      caret.innerHTML = '&#9650;'; // Up arrow
+    } else {
+      caret.innerHTML = '&#9660;'; // Down arrow
+    }
+
+    event.stopPropagation(); // Stop the event from propagating
+  });
+
+  // Close the dropdown if clicked outside of it
+  document.addEventListener('click', function(event) {
+    const container = document.querySelector('.due-date-container');
+
+    if (!container.contains(event.target)) {
+      container.classList.remove('open');
+      document.getElementById('caret').innerHTML = '&#9660;'; // Reset to down arrow
+    }
+  });
+
+  // Set the due date based on predefined options
+  function setDueDate(option) {
+    const dueDateInput = document.getElementById('dueDate');
+    const today = new Date();
+
+    let dueDate;
+    switch (option) {
+      case 'today':
+        dueDate = today;
+        break;
+      case 'tomorrow':
+        dueDate = new Date(today);
+        dueDate.setDate(today.getDate() + 1);
+        break;
+      case 'laterThisWeek':
+        const todayDayOfWeek = today.getDay();
+        const twoDaysFromNow = new Date(today);
+        twoDaysFromNow.setDate(today.getDate() + 2);
+        const sunday = new Date(today);
+        sunday.setDate(today.getDate() + (7 - todayDayOfWeek));
+        dueDate = twoDaysFromNow <= sunday ? twoDaysFromNow : sunday;
+        break;
+      case 'thisWeekend':
+        const daysUntilSaturday = 6 - today.getDay();
+        dueDate = new Date(today);
+        dueDate.setDate(today.getDate() + daysUntilSaturday);
+        break;
+      case 'nextWeek':
+        const daysUntilNextMonday = today.getDay() === 0 ? 1 : 8 - today.getDay();
+        dueDate = new Date(today);
+        dueDate.setDate(today.getDate() + daysUntilNextMonday);
+        break;
+    }
+
+    // Set the value in the input
+    dueDateInput.value = dueDate.toISOString().split('T')[0];
+
+    // Close dropdown and reset caret
+    document.querySelector('.due-date-container').classList.remove('open');
+    document.getElementById('caret').innerHTML = '&#9660;'; // Down arrow
+  }
+
+  // Populate the human-readable date format in the dropdown
+  (function populateDates() {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+
+    const todayText = formatDateWithoutYear(today);
+    const tomorrow = formatDateWithoutYear(new Date(today.getTime() + 24 * 60 * 60 * 1000));
+
+    const twoDaysFromNow = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000);
+    const sunday = dayOfWeek === 0 ? today : new Date(today.getTime() + (7 - dayOfWeek) * 24 * 60 * 60 * 1000);
+
+    const laterThisWeek = formatDateWithoutYear(twoDaysFromNow <= sunday ? twoDaysFromNow : sunday);
+    const thisWeekend = formatDateWithoutYear(new Date(today.getTime() + (6 - today.getDay()) * 24 * 60 * 60 * 1000));
+    const nextWeek = formatDateWithoutYear(new Date(today.getTime() + (8 - today.getDay()) * 24 * 60 * 60 * 1000));
+
+    // Populate the date options
+    document.querySelector('li[onclick="setDueDate(\'today\')"] .date-option').innerText = todayText;
+    document.querySelector('li[onclick="setDueDate(\'tomorrow\')"] .date-option').innerText = tomorrow;
+    document.querySelector('li[onclick="setDueDate(\'thisWeekend\')"] .date-option').innerText = thisWeekend;
+    document.querySelector('li[onclick="setDueDate(\'nextWeek\')"] .date-option').innerText = nextWeek;
+
+    if (dayOfWeek <= 3) {
+      document.querySelector('li[onclick="setDueDate(\'laterThisWeek\')"]').style.display = 'flex';
+      document.querySelector('li[onclick="setDueDate(\'laterThisWeek\')"] .date-option').innerText = laterThisWeek;
+    } else {
+      document.querySelector('li[onclick="setDueDate(\'laterThisWeek\')"]').style.display = 'none';
+    }
+  })();
+
+  // Helper function to format the date
+  function formatDateWithoutYear(date) {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short', // Sat
+      month: 'short',   // Sep
+      day: 'numeric'    // 23
+    });
+  }
+</script>

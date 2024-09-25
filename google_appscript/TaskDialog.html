@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <?!= include('Stylesheet'); ?>
+  </head>
+  <body onload="setFocusToTaskInput()">
+    <form id="taskForm">
+      <input type="text" name="task" id="taskInput" placeholder="Task description" required>
+      <label for="dueDate">Due Date</label>
+      <div class="due-date-container">
+        <input type="date" id="dueDate" name="dueDate" required>
+        <button type="button" id="datePickerToggle" aria-label="Quick select due date">
+          <span id="caret">&#9660;</span>
+        </button>
+        <ul id="dateDropdown" class="date-dropdown">
+          <li onclick="setDueDate('today')">
+            <span class="option-label">Today</span>
+            <span class="date-option"></span>
+          </li>
+          <li onclick="setDueDate('tomorrow')">
+            <span class="option-label">Tomorrow</span>
+            <span class="date-option"></span>
+          </li>
+          <li onclick="setDueDate('laterThisWeek')">
+            <span class="option-label">Later this week</span>
+            <span class="date-option"></span>
+          </li>
+          <li onclick="setDueDate('thisWeekend')">
+            <span class="option-label">This weekend</span>
+            <span class="date-option"></span>
+          </li>
+          <li onclick="setDueDate('nextWeek')">
+            <span class="option-label">Next week</span>
+            <span class="date-option"></span>
+          </li>
+        </ul>
+      </div>
+
+      <label for="estimate">Estimate</label>
+      <select name="estimate">
+        <option value="">--Select--</option>
+        <option value="small">small</option>
+        <option value="medium">medium</option>
+        <option value="large">large</option>
+        <option value="break it down">break it down</option>
+      </select>
+
+      <label for="priority">Priority</label>
+      <select name="priority">
+        <option value="">--Select--</option>
+        <option value="P0">P0</option>
+        <option value="P1">P1</option>
+        <option value="P2">P2</option>
+        <option value="P3">P3</option>
+      </select>
+
+      <label for="status">Status</label>
+      <select name="status">
+        <option value="">--Select--</option>
+        <option value="Not started">Not started</option>
+        <option value="In progress">In progress</option>
+        <option value="Blocked">Blocked</option>
+        <option value="Completed">Completed</option>
+      </select>
+
+      <button type="button" id="submitButton" onclick="handleFormSubmit()">Add Task</button>
+
+      <!-- Loader container for displaying during submission -->
+      <div id="loadingContainer" style="display: none;">
+        <div id="loadingSpinner"></div>
+        <div id="message">Adding task...</div>
+      </div>
+    </form>
+    <?!= include('JavaScript'); ?>
+  </body>
+</html>
