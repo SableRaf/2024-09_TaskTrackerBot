@@ -118,6 +118,20 @@ def add_task(update: Update, context: CallbackContext):
     update.message.reply_text('Please provide a task description:')
     context.user_data['awaiting_task'] = True
 
+# Helper function to format the due date with special cases for today, tomorrow, and past dates
+def format_due_date(due_date_obj):
+    today = datetime.today()
+    days_difference = (due_date_obj - today).days
+
+    if days_difference == 0:
+        return due_date_obj.strftime('%a, %b %d %Y') + " (Today)"
+    elif days_difference == 1:
+        return due_date_obj.strftime('%a, %b %d %Y') + " (Tomorrow)"
+    elif days_difference > 1:
+        return due_date_obj.strftime('%a, %b %d %Y') + f" ({days_difference} days from now)"
+    else:
+        return due_date_obj.strftime('%a, %b %d %Y') + f" ({abs(days_difference)} days ago)"
+
 # Handle user input and gather task details from the LLM
 def handle_task_input(update: Update, context: CallbackContext):
     if context.user_data.get('awaiting_task'):
@@ -126,14 +140,21 @@ def handle_task_input(update: Update, context: CallbackContext):
         # Extract structured data using the LLM
         task_data, error = extract_task_data(task_description)
 
-        if task_data and task_data.get('task'):
+        if task_data and task_data.get('dueDate'):
+            # Parse the due date from the task data
+            due_date_str = task_data['dueDate']
+            due_date_obj = datetime.strptime(due_date_str, '%Y-%m-%d')
+
+            # Format the due date using the helper function
+            formatted_due_date = format_due_date(due_date_obj)
+
             # Format task details in a human-readable way
             task_summary = (
                 f"*Task*: {task_data['task']}\n"
                 f"*Estimate*: {task_data['estimate']}\n"
                 f"*Priority*: {task_data['priority']}\n"
                 f"*Status*: {task_data['status']}\n"
-                f"*Due Date*: {task_data['dueDate']}"
+                f"*Due Date*: {formatted_due_date}"
             )
 
             # Ask for confirmation with buttons
@@ -151,6 +172,7 @@ def handle_task_input(update: Update, context: CallbackContext):
             update.message.reply_text("Sorry, the task description is required. Please provide it.")
 
         context.user_data['awaiting_task'] = False
+
 
 # Function to handle button clicks
 def button_click_handler(update: Update, context: CallbackContext):
@@ -190,6 +212,19 @@ def send_task_to_google_script(update, task_data):
 def error_handler(update: Update, context: CallbackContext):
     logger.error(msg="Exception while handling an update:", exc_info=context.error)
     update.message.reply_text('An unexpected error occurred. Please try again later.')
+
+def format_due_date(due_date_obj):
+    today = datetime.today()
+    days_difference = (due_date_obj - today).days
+
+    if days_difference == 0:
+        return due_date_obj.strftime('%a, %b %d %Y') + " (Today)"
+    elif days_difference == 1:
+        return due_date_obj.strftime('%a, %b %d %Y') + " (Tomorrow)"
+    elif days_difference > 1:
+        return due_date_obj.strftime('%a, %b %d %Y') + f" ({days_difference} days from now)"
+    else:
+        return due_date_obj.strftime('%a, %b %d %Y') + f" ({abs(days_difference)} days ago)"
 
 # Modify the main function to include the new command handler and error handler
 def main():
