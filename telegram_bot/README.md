@@ -54,6 +54,12 @@ TBD (Create target sheet, Create Google service account, Enable Google Apps Scri
 
 ## Managing the Bot Service
 
+- Check the status of the bot service:
+
+  ```bash
+  sudo systemctl status telegrambot
+  ```
+
 - **View service logs**:
 
   To check the logs of the bot running as a service:
@@ -83,6 +89,7 @@ TBD (Create target sheet, Create Google service account, Enable Google Apps Scri
   ```bash
   sudo systemctl disable telegrambot
   ```
+
 ### Managing running instances
 
 ### Check running instances
@@ -98,10 +105,10 @@ ps aux | grep telegramBot.py
     To kill the bot:
 
 ```bash
-sudo pkill -f telegramBot.py
+sudo kill $(ps aux | grep telegramBot.py | grep -v grep | awk '{print $2}')
 ```
 
-Note: running the setup.sh script will also kill any running instances of the bot.
+Note: running the setup.sh script should also kill any running instances of the bot.
 
 ### Managing the Bot Service
 
