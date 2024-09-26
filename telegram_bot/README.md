@@ -16,7 +16,7 @@ TBD (Create target sheet, Create Google service account, Enable Google Apps Scri
 
 ### Setup Instructions
 
-1. **Create a `.env` file** in the project directory based on the `.evn-template` file and fill in the required values.
+1. ssh into the server
 
 2. **Clone the repository** and navigate to the project directory:
 
@@ -25,7 +25,15 @@ TBD (Create target sheet, Create Google service account, Enable Google Apps Scri
    cd <repository-directory>
    ```
 
-3. **Run the setup script** with arguments to configure the environment and/or auto-start the bot:
+3. **Create a `.env` file** by copying the sample file:
+
+   ```bash
+   cp .env-template .env
+   ```
+
+4. **Edit the `.env` file** and fill in the required values:
+
+5. **Run the setup script** with arguments to configure the environment and/or auto-start the bot:
 
    ```bash
    bash ./setup.sh [-v] [-a]
