@@ -93,7 +93,7 @@ fi
 
 # Start the bot with the unique identifier
 echo "Starting the Telegram bot with process name: $BOT_PROCESS_NAME"
-python3 $BOT_PROCESS_NAME &
+python3 telegramBot.py &
 
 # Autostart setup
 if $AUTOSTART; then
@@ -103,7 +103,7 @@ if $AUTOSTART; then
   USER="pi"
 
   # Create systemd service file
-  SERVICE_FILE="/etc/systemd/system/$BOT_PROCESS_NAME.service"
+  SERVICE_FILE="/etc/systemd/system/telegrambot.service"
 
   sudo bash -c "cat > $SERVICE_FILE" <<EOL
 [Unit]
@@ -113,7 +113,7 @@ After=network.target
 [Service]
 User=$USER
 WorkingDirectory=$WORKING_DIR
-ExecStart=/bin/bash -c 'source $WORKING_DIR/env/bin/activate && python3 $WORKING_DIR/$BOT_PROCESS_NAME'
+ExecStart=/bin/bash -c 'source $WORKING_DIR/env/bin/activate && python3 $WORKING_DIR/telegramBot.py'
 Restart=always
 
 [Install]
@@ -122,8 +122,8 @@ EOL
 
   # Reload systemd, enable and start the service
   sudo systemctl daemon-reload
-  sudo systemctl enable $BOT_PROCESS_NAME
-  sudo systemctl start $BOT_PROCESS_NAME
+  sudo systemctl enable telegrambot
+  sudo systemctl start telegrambot
 
   echo "Telegram bot service setup and started."
 fi
