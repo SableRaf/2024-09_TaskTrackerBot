@@ -129,9 +129,11 @@ else
   echo "No requirements.txt found. Make sure the necessary dependencies are installed."
 fi
 
-# Start the bot
-echo "Starting the Telegram bot..."
-python3 telegramBot.py &
+# Start the bot only if autostart is not enabled
+if ! $AUTOSTART; then
+  echo "Starting the Telegram bot manually..."
+  python3 telegramBot.py &
+fi
 
 # Autostart setup
 if $AUTOSTART; then
