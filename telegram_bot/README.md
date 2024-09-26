@@ -28,7 +28,7 @@ TBD (Create target sheet, Create Google service account, Enable Google Apps Scri
 3. **Run the setup script** with arguments to configure the environment and/or auto-start the bot:
 
    ```bash
-   source setup.sh [-v] [-a]
+   bash ./setup.sh [-v] [-a]
    ```
 
    - `-v` : (Optional) Create and activate a Python virtual environment.
@@ -37,20 +37,10 @@ TBD (Create target sheet, Create Google service account, Enable Google Apps Scri
    Example for creating a virtual environment and enabling auto-start:
 
    ```bash
-   source setup.sh -v -a
+   bash ./setup.sh -v -a
    ```
 
-   This script will:
-   - Ensure `pip3` is installed.
-   - Create a Python virtual environment if one doesn't exist (when `-v` is provided).
-   - Activate the virtual environment.
-   - Install the required Python dependencies from `requirements.txt`.
-   - Optionally, set up the bot to auto-start on boot via `systemd` (when `-a` is provided).
-   - Start the Telegram bot.
-
-4. **Managing the bot service (if auto-start is enabled)**
-
-   If the auto-start option (`-a`) was used, the bot will run as a `systemd` service.
+   This script will set up the environment, install the required dependencies, and configure the bot to run as a service if the auto-start option is enabled.
 
 ## Managing the Bot Service
 
@@ -76,19 +66,11 @@ TBD (Create target sheet, Create Google service account, Enable Google Apps Scri
 
 - **Stop the bot service**:
 
-  To stop the bot:
-
   ```bash
-  sudo systemctl stop telegrambot
+  bash ./stop_bot_service.sh
   ```
 
-- **Disable the bot from auto-starting on boot**:
-
-  To prevent the bot from automatically starting after a reboot:
-
-  ```bash
-  sudo systemctl disable telegrambot
-  ```
+  This script will stop the bot service and disable it from auto-starting on boot.
 
 ### Managing running instances
 
