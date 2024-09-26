@@ -10,7 +10,6 @@ show_help() {
 # Default values for flags
 USE_VENV=false
 AUTOSTART=false
-BOT_PROCESS_NAME="telegramBot.py"
 
 # Parse command-line arguments
 while getopts "va" opt; do
@@ -35,20 +34,9 @@ if [[ "$0" == "$BASH_SOURCE" ]]; then
     return 1
 fi
 
-# Load .env file to get BOT_PROCESS_NAME
-if [ -f ".env" ]; then
-    echo "Loading .env file..."
-    export $(grep -v '^#' .env | xargs)
-
-    # Use the identifier if defined in the .env file
-    if [ -n "$BOT_ID" ]; then
-        BOT_PROCESS_NAME="telegramBot.py-$BOT_ID"
-    fi
-fi
-
 # Check for running bot instances and stop them
 echo "Checking for existing running instances of the bot..."
-PIDS=$(pgrep -f $BOT_PROCESS_NAME)
+PIDS=$(pgrep -f "telegramBot.py")
 
 if [ -n "$PIDS" ]; then
     echo "Stopping existing bot instances: $PIDS"
@@ -91,8 +79,8 @@ else
   echo "No requirements.txt found. Make sure the necessary dependencies are installed."
 fi
 
-# Start the bot with the unique identifier
-echo "Starting the Telegram bot with process name: $BOT_PROCESS_NAME"
+# Start the bot
+echo "Starting the Telegram bot..."
 python3 telegramBot.py &
 
 # Autostart setup
@@ -107,7 +95,7 @@ if $AUTOSTART; then
 
   sudo bash -c "cat > $SERVICE_FILE" <<EOL
 [Unit]
-Description=Telegram Bot ($BOT_PROCESS_NAME)
+Description=Telegram Bot
 After=network.target
 
 [Service]
