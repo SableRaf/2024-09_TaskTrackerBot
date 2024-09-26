@@ -34,6 +34,14 @@ if [[ "$0" == "$BASH_SOURCE" ]]; then
     return 1
 fi
 
+# Install pip3 if not found
+if ! command -v pip3 &> /dev/null; then
+    echo "pip3 could not be found, installing..."
+    sudo apt update && sudo apt install -y python3-pip
+else
+    echo "pip3 is already installed."
+fi
+
 # Virtual environment setup
 if $USE_VENV; then
   if [ ! -d "env" ]; then
