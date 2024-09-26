@@ -2,7 +2,7 @@
 
 ## Google App Script
 
-TBD
+TBD (Create target sheet, Create Google service account, Enable Google Apps Script API, etc.)
 
 ## Telegram Bot
 
