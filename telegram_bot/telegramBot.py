@@ -69,7 +69,7 @@ def extract_task_data(task_description):
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-3.5-turbo",
             messages=[system_message, user_message],
             functions=[task_function],
             function_call={"name": "extract_task"}
