@@ -70,6 +70,7 @@ fi
 if [ ! -x "kill_bot_instances.sh" ]; then
     echo "Making kill_bot_instances.sh executable..."
     chmod +x kill_bot_instances.sh
+fi
 
 # Stop and cleanup existing bot service and instances
 ./kill_bot_instances.sh
