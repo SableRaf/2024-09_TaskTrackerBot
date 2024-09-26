@@ -105,7 +105,7 @@ ps aux | grep telegramBot.py
     To kill the bot:
 
 ```bash
-sudo kill $(ps aux | grep telegramBot.py | grep -v grep | awk '{print $2}')
+sudo kill -9 $(ps aux | grep telegramBot.py | grep -v grep | awk '{print $2}')
 ```
 
 Note: running the setup.sh script should also kill any running instances of the bot.
