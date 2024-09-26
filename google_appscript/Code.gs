@@ -1,5 +1,7 @@
 // Code.gs
 
+const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+
 // Create custom menu item(s)
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
@@ -11,9 +13,7 @@ function onOpen() {
   refreshUrgency(true);
 }
 
-function doPost(e) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  
+function doPost(e) {  
   // Log the incoming data to see if it is parsed correctly
   Logger.log("Incoming data: " + e.postData.contents);
 
@@ -96,9 +96,7 @@ function openTaskDialog() {
 
 // When the sheet gets edited
 // Use cached headers in your onEdit function and other relevant functions
-function onEdit(e) {
-  var sheet = e ? e.source.getActiveSheet() : SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
-  
+function onEdit(e) {  
   // Retrieve cached header indices
   var headerIndices = getCachedHeaders(sheet);
 
@@ -201,8 +199,7 @@ function updateUrgency_(sheet, headerIndices, row) {
 }
 
 // Optimized function to refresh urgency for all tasks
-function refreshUrgency(hideAlert = false) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];  
+function refreshUrgency(hideAlert = false) { 
   var headerIndices = getCachedHeaders(sheet);
 
   var lastRow = sheet.getLastRow();
@@ -232,7 +229,7 @@ function refreshUrgency(hideAlert = false) {
 
 function createDummyTask(){
   var dummyData = {
-    task: "Test Task",      // Dummy task
+    task: "Test task made with createDummyTask()", // Dummy task
     estimate: "small",      // Dummy estimate
     priority: "P3",         // Dummy priority
     status: "Blocked",      // Dummy status
@@ -242,26 +239,26 @@ function createDummyTask(){
   createTask(dummyData);
 }
 
-// Optimized createTask function (as defined above)
 function createTask(data) {
   try {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+    // Get the last row for task insertion
     var lastRow = sheet.getLastRow() + 1;
 
     // Get cached headers
     var headerIndices = getCachedHeaders(sheet);
 
-    // Automatically add today's date in the "Added date" column
+    // Format the current date
     var currentDate = new Date();
     var formattedDate = Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM-dd-yyyy");
 
-    // Determine if the task is completed to set the "Done date"
-    var doneDate = (data.status === "Completed") ? formattedDate : '';
+    // Use the provided values or calculate if not provided by the client
+    var addedDate = data.addedDate || formattedDate;
+    var doneDate = data.doneDate || (data.status === "Completed" ? formattedDate : '');
 
-    // Calculate urgency based on status and due date
-    var urgency = calculateUrgency_(data.status, data.dueDate);
+    // Calculate urgency based on status and due date, if not provided by the client
+    var urgency = data.urgency || calculateUrgency_(data.status, data.dueDate);
 
-    // Create an array corresponding to the order of columns in the sheet
+    // Create row data based on headers
     var rowData = [];
     rowData[headerIndices['Task'] - 1] = data.task || '';
     rowData[headerIndices['Estimate'] - 1] = data.estimate || '';
@@ -269,7 +266,7 @@ function createTask(data) {
     rowData[headerIndices['Status'] - 1] = data.status || '';
     rowData[headerIndices['Due date'] - 1] = data.dueDate || '';
     rowData[headerIndices['Urgency'] - 1] = urgency;
-    rowData[headerIndices['Added date'] - 1] = formattedDate;
+    rowData[headerIndices['Added date'] - 1] = addedDate;
     rowData[headerIndices['Done date'] - 1] = doneDate;
 
     // Ensure all columns are filled to match the sheet's structure
@@ -279,7 +276,7 @@ function createTask(data) {
       }
     }
 
-    // Write the entire row of data in one operation
+    // Write the row data to the sheet
     sheet.getRange(lastRow, 1, 1, Object.keys(headerIndices).length).setValues([rowData]);
 
     return "Success";
@@ -291,7 +288,6 @@ function createTask(data) {
 
 // Function to focus on the selected row by toggling the "Focus" checkbox
 function focusOnSelected() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   var selection = sheet.getActiveRange();
   
   if (!selection) {

@@ -2,6 +2,17 @@
   // Handle form submission
   function handleFormSubmit() {
     const formData = getFormData();
+
+    // Format the current date
+    const currentDate = new Date();
+    const formattedDate = currentDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+
+    // Determine if task is completed and set the "Done date"
+    formData.doneDate = formData.status === "Completed" ? formattedDate : '';
+
+    // Calculate urgency based on status and due date
+    formData.urgency = calculateUrgency(formData.status, formData.dueDate);
+
     toggleLoading(true);
     animateEllipsis();
 
@@ -9,6 +20,38 @@
       .withSuccessHandler(onSuccess)
       .withFailureHandler(onFailure)
       .createTask(formData);
+  }
+
+  // Calculate urgency based on status and due date on the client side
+  function calculateUrgency(status, dueDate) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize to midnight for accurate comparison
+
+    if (status === "Completed") {
+      return ""; // Clear urgency if status is "Completed"
+    }
+
+    const dueDateObj = new Date(dueDate);
+    if (isNaN(dueDateObj)) {
+      return ""; // If the date is empty or invalid, leave it blank
+    }
+
+    dueDateObj.setHours(0, 0, 0, 0); // Normalize to midnight
+
+    const timeDiff = dueDateObj.getTime() - today.getTime();
+    const dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)); // Difference in days
+
+    if (dayDiff < 0) {
+      return "U0 Critical";
+    } else if (dayDiff === 0) {
+      return "U1 Urgent";
+    } else if (dayDiff <= 3) {
+      return "U2 High";
+    } else if (dayDiff <= 7) {
+      return "U3 Medium";
+    } else {
+      return "U4 Low";
+    }
   }
 
   // Function to set focus to the task input when the dialog opens
