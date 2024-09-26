@@ -11,11 +11,22 @@
       .createTask(formData);
   }
 
+  // Function to set focus to the task input when the dialog opens
+  function setFocusToTaskInput() {
+    var taskInput = document.getElementById('taskInput');
+    if (taskInput) {
+      taskInput.focus(); // Set focus on the input field
+    }
+  }
+
+  // Call the setFocusToTaskInput() when the window loads
+  window.onload = setFocusToTaskInput;
+
   // Get form data
   function getFormData() {
     const formData = {};
     const elements = document.getElementById('taskForm').elements;
-
+    
     for (let i = 0; i < elements.length; i++) {
       if (elements[i].name) {
         formData[elements[i].name] = elements[i].value;
@@ -59,7 +70,7 @@
   // Handle task creation success
   function onSuccess() {
     console.log('Task successfully created!');
-
+    
     // Stop ellipsis animation
     stopEllipsis();
 
@@ -79,14 +90,14 @@
     messageDiv.innerText = 'Task creation failed: ' + error;
     toggleLoading(false);  // Show the form again on failure
   }
-
+    
   // Dropdown toggle for date picker
   document.getElementById('datePickerToggle').addEventListener('click', function (event) {
     const container = document.querySelector('.due-date-container');
     const caret = document.getElementById('caret');
-
+    
     container.classList.toggle('open');
-
+    
     // Toggle the caret icon direction
     if (container.classList.contains('open')) {
       caret.innerHTML = '&#9650;'; // Up arrow
@@ -100,7 +111,7 @@
   // Close the dropdown if clicked outside of it
   document.addEventListener('click', function(event) {
     const container = document.querySelector('.due-date-container');
-
+    
     if (!container.contains(event.target)) {
       container.classList.remove('open');
       document.getElementById('caret').innerHTML = '&#9660;'; // Reset to down arrow
@@ -153,7 +164,7 @@
   (function populateDates() {
     const today = new Date();
     const dayOfWeek = today.getDay();
-
+    
     const todayText = formatDateWithoutYear(today);
     const tomorrow = formatDateWithoutYear(new Date(today.getTime() + 24 * 60 * 60 * 1000));
 
