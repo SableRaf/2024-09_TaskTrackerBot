@@ -2,7 +2,7 @@
 
 # Help message
 show_help() {
-    echo "Usage: source setup.sh [-v] [-a]"
+    echo "Usage: ./setup.sh [-v] [-a]"
     echo "-v  (Optional) Create and activate virtual environment"
     echo "-a  (Optional) Set bot to autostart on reboot"
 }
@@ -22,17 +22,10 @@ while getopts "va" opt; do
       ;;
     \? )
       show_help
-      return 1
+      exit 1
       ;;
   esac
 done
-
-# Check if the script is sourced
-if [[ "$0" == "$BASH_SOURCE" ]]; then
-    echo "You must source this script for the virtual environment to remain activated."
-    echo "Run: source setup.sh [-v] [-a]"
-    return 1
-fi
 
 # Check for updates from the remote repository
 echo "Checking for updates from the remote repository..."
@@ -64,7 +57,7 @@ if [ "$LOCAL" != "$REMOTE" ]; then
         git pull origin
         if [ $? -ne 0 ]; then
             echo "Failed to pull the latest changes. Exiting."
-            return 1
+            exit 1
         fi
     else
         echo "Continuing without pulling the changes."
@@ -134,7 +127,7 @@ if $AUTOSTART; then
       echo "Using user: $USER"
   else
       echo "User $USER does not exist. Exiting."
-      return 1
+      exit 1
   fi
 
   # Define working directory
