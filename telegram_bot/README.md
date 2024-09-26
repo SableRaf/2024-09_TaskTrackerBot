@@ -118,22 +118,39 @@ TBD
 
 ### Troubleshooting
 
-- **Bot instance conflict**:
+#### Bot instance conflict
 
-   If you encounter the error `telegram.error.Conflict: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running`, it means there are multiple instances of the bot trying to fetch updates.
+If you encounter the error `telegram.error.Conflict: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running`, it means there are multiple instances of the bot trying to fetch updates.
 
-   To resolve this, stop the bot and clear the pending updates with the following command:
+Make sure to stop any other instances of the bot running using the same Telegram bot token. If you are running the bot from multiple terminals, services, or physical machines, ensure that only one instance is active at a time.
 
-   ```
-   https://api.telegram.org/bot<bot_token>/getUpdates?offset=-1
-   ```
+To clear the pending updates from the Telegram server, you can use the following URL in your browser:
 
-- **Externally managed environment error**:
+```
+https://api.telegram.org/bot<bot_token>/getUpdates?offset=-1
+```
+Replace `<bot_token>` with your actual bot token.
 
-   If you see the error `error: externally-managed-environment` during the installation of Python packages, it means your system has restricted package installations to protect the Python environment. To fix this, ensure that all dependencies are installed inside a virtual environment using the `-v` option:
+This is normally handled by the `setup.sh` script, but if you encounter this error, you can manually clear the updates using the above URL.
 
-   ```bash
-   source setup.sh -v
-   ```
+#### Externally managed environment error
 
-   This will ensure that the virtual environment is used for installing Python packages and avoids conflicts with the system's package management.
+If you see the error `error: externally-managed-environment` during the installation of Python packages, it means your system has restricted package installations to protect the Python environment. To fix this, ensure that all dependencies are installed inside a virtual environment using the `-v` option:
+
+```bash
+source setup.sh -v
+```
+
+This will ensure that the virtual environment is used for installing Python packages and avoids conflicts with the system's package management.
+
+#### PATH Warnings
+
+If you see warnings like `The script xyz is installed in '/home/yourusername/.local/bin' which is not on PATH`, this means some executables were installed in a directory not included in your system’s global `PATH`. This is typically not an issue if you're running the bot inside a virtual environment, as the environment handles the paths internally and the warnings can safely be ignored.
+
+However, if you need to use these commands outside the virtual environment, consider adding `/home/yourusername/.local/bin` to your `PATH` by modifying your `.bashrc` file:
+
+```bash
+export PATH=$PATH:/home/yourusername/.local/bin
+```
+
+This will ensure the executables are accessible globally.
