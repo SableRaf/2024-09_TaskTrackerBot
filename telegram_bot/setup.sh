@@ -34,6 +34,31 @@ if [[ "$0" == "$BASH_SOURCE" ]]; then
     return 1
 fi
 
+# Check for updates from the remote repository
+echo "Checking for updates from the remote repository..."
+git fetch origin
+
+LOCAL=$(git rev-parse @)
+REMOTE=$(git rev-parse @{u})
+
+if [ "$LOCAL" != "$REMOTE" ]; then
+    echo "Updates are available from the remote repository."
+    read -p "Do you want to pull the latest changes? (y/n): " -n 1 -r
+    echo    # Move to a new line
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo "Pulling the latest changes..."
+        git pull origin
+        if [ $? -ne 0 ]; then
+            echo "Failed to pull the latest changes. Exiting."
+            return 1
+        fi
+    else
+        echo "Continuing without pulling the changes."
+    fi
+else
+    echo "No updates available. You are up to date."
+fi
+
 # Check for running bot instances and stop them
 echo "Checking for existing running instances of the bot..."
 PIDS=$(pgrep -f "telegramBot.py")
