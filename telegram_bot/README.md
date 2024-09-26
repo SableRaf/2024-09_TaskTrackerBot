@@ -83,6 +83,25 @@ TBD
   ```bash
   sudo systemctl disable telegrambot
   ```
+### Managing running instances
+
+### Check running instances
+
+To check if instances of the bot are running:
+
+```bash
+ps aux | grep telegramBot.py
+```
+
+### Kill running instances
+
+    To kill the bot:
+
+```bash
+sudo pkill -f telegramBot.py
+```
+
+Note: running the setup.sh script will also kill any running instances of the bot.
 
 ### Managing the Bot Service
 
