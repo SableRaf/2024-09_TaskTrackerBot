@@ -53,6 +53,7 @@ if [ "$LOCAL" != "$REMOTE" ]; then
     git log --oneline $LOCAL..$REMOTE -n 3
 
     # Ask the user if they want to pull the latest changes
+    echo    # Move to a new line
     read -p "Do you want to pull the latest changes? (y/n): " -n 1 -r
     echo    # Move to a new line
     if [[ $REPLY =~ ^[Yy]$ ]]; then
