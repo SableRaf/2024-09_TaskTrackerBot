@@ -112,7 +112,7 @@ fi
 
 # Install dependencies
 if [ -f "requirements.txt" ]; then
-  echo "Installing dependencies from requirements.txt in the virtual environment..."
+  echo "Installing dependencies from requirements.txt..."
   pip3 install --break-system-packages -r requirements.txt
 else
   echo "No requirements.txt found. Make sure the necessary dependencies are installed."
@@ -126,31 +126,60 @@ python3 telegramBot.py &
 if $AUTOSTART; then
   echo "Setting up autostart for the Telegram bot..."
 
+  # Determine the user who invoked sudo, if any
+  USER="${SUDO_USER:-$(whoami)}"
+
+  # Verify that the user exists
+  if id "$USER" &>/dev/null; then
+      echo "Using user: $USER"
+  else
+      echo "User $USER does not exist. Exiting."
+      return 1
+  fi
+
+  # Define working directory
   WORKING_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-  USER="raphael"
 
-  # Create systemd service file
-  SERVICE_FILE="/etc/systemd/system/telegrambot.service"
+  # Create systemd service file in the current directory
+  SERVICE_FILE="telegrambot.service"
 
-  sudo bash -c "cat > $SERVICE_FILE" <<EOL
+  cat > $SERVICE_FILE <<EOL
 [Unit]
 Description=Telegram Bot
 After=network.target
 
 [Service]
+Type=simple
 User=$USER
 WorkingDirectory=$WORKING_DIR
-ExecStart=/bin/bash -c 'source $WORKING_DIR/env/bin/activate && python3 $WORKING_DIR/telegramBot.py'
+ExecStart=$WORKING_DIR/env/bin/python3 $WORKING_DIR/telegramBot.py
 Restart=always
+RestartSec=5
+StandardOutput=append:$WORKING_DIR/telegrambot.log
+StandardError=append:$WORKING_DIR/telegrambot.log
+Environment=PYTHONUNBUFFERED=1
 
 [Install]
 WantedBy=multi-user.target
 EOL
 
-  # Reload systemd, enable and start the service
+  # Move the service file to /etc/systemd/system/
+  echo "Moving the service file to /etc/systemd/system/"
+  sudo mv $SERVICE_FILE /etc/systemd/system/
+
+  # Reload systemd to recognize the new service
+  echo "Reloading systemd daemon..."
   sudo systemctl daemon-reload
+
+  # Enable the service to start on boot
+  echo "Enabling telegrambot service to start on boot..."
   sudo systemctl enable telegrambot
+
+  # Start the telegrambot service
+  echo "Starting telegrambot service..."
   sudo systemctl start telegrambot
 
-  echo "Telegram bot service setup and started."
+  # Check the status of the service
+  echo "Checking the status of telegrambot service..."
+  sudo systemctl status telegrambot
 fi
