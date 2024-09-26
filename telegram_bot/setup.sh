@@ -66,10 +66,13 @@ else
     echo "No updates available. You are up to date."
 fi
 
-# Stop and cleanup existing bot service and instances
-./stop_bot_service.sh
-./kill_bot_instances.sh
+# Make the kill_bot_instances.sh script executable if it is not
+if [ ! -x "kill_bot_instances.sh" ]; then
+    echo "Making kill_bot_instances.sh executable..."
+    chmod +x kill_bot_instances.sh
 
+# Stop and cleanup existing bot service and instances
+./kill_bot_instances.sh
 
 # Install pip3 if not found
 if ! command -v pip3 &> /dev/null; then
