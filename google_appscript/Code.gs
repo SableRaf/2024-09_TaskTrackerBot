@@ -4,49 +4,66 @@ const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
 
 // Create custom menu item(s)
 function onOpen() {
+  var start_time = new Date().getTime();
   var ui = SpreadsheetApp.getUi();
+  Logger.log('Step: ""Get UI" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
+
   ui.createMenu('Task Manager')
       .addItem('Create New Task', 'openTaskDialog')
       .addItem('Focus on Selected', 'focusOnSelected')
       .addItem('Refresh Urgency', 'refreshUrgency')
       .addToUi();
+  Logger.log('Step: ""Add Menu Items" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
+
   refreshUrgency(true);
+  Logger.log('Step: ""Refresh Urgency" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
+}
+
+function openTaskDialog() {
+  var template = HtmlService.createTemplateFromFile('TaskDialog');
+  var html = template.evaluate()
+      .setWidth(400)
+      .setHeight(300); 
+  SpreadsheetApp.getUi().showModalDialog(html, 'New Task');
 }
 
 function doPost(e) {  
-  // Log the incoming data to see if it is parsed correctly
+  var start_time = new Date().getTime();
+  
   Logger.log("Incoming data: " + e.postData.contents);
+  Logger.log('Step: "Log Incoming Data" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
-  // Parse the incoming data and add a new row
   const parsedData = parseIncomingData(e.postData.contents);
   Logger.log("Parsed data: " + JSON.stringify(parsedData));
+  Logger.log('Step: "Parse Incoming Data" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
   
   createTask(parsedData);
+  Logger.log('Step: "Create Task" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
-  // Return a success message
   return ContentService.createTextOutput(`Success. Your task was added to the sheet.`);
 }
 
-// Cache headers indices for faster access
 function getCachedHeaders(sheet) {
+  var start_time = new Date().getTime();
   var cache = CacheService.getScriptCache();
   var cachedHeaders = cache.get("headerIndices");
 
   if (cachedHeaders) {
+    Logger.log('Step: "Retrieve Cached Headers" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
     return JSON.parse(cachedHeaders);
   }
 
-  // If no cache exists, calculate the headers
   var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  Logger.log('Step: "Get Headers" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
-  // Create an object to store header names with their corresponding indices
   var headerIndices = {};
   headers.forEach(function (header, index) {
-    headerIndices[header] = index + 1; // Add +1 to match 1-based Google Sheets indexing
+    headerIndices[header] = index + 1;
   });
+  Logger.log('Step: "Create Header Indices" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
-  // Cache the headerIndices object for 120 minutes (7200 seconds)
   cache.put("headerIndices", JSON.stringify(headerIndices), 7200);
+  Logger.log('Step: "Cache Header Indices" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
   return headerIndices;
 }
@@ -240,25 +257,24 @@ function createDummyTask(){
 }
 
 function createTask(data) {
+  var start_time = new Date().getTime();
   try {
-    // Get the last row for task insertion
     var lastRow = sheet.getLastRow() + 1;
+    Logger.log('Step: "Get Last Row" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
-    // Get cached headers
     var headerIndices = getCachedHeaders(sheet);
+    Logger.log('Step: "Get Cached Headers" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
-    // Format the current date
     var currentDate = new Date();
     var formattedDate = Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM-dd-yyyy");
 
-    // Use the provided values or calculate if not provided by the client
     var addedDate = data.addedDate || formattedDate;
     var doneDate = data.doneDate || (data.status === "Completed" ? formattedDate : '');
+    Logger.log('Step: "Format Dates" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
-    // Calculate urgency based on status and due date, if not provided by the client
     var urgency = data.urgency || calculateUrgency_(data.status, data.dueDate);
+    Logger.log('Step: "Calculate Urgency" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
-    // Create row data based on headers
     var rowData = [];
     rowData[headerIndices['Task'] - 1] = data.task || '';
     rowData[headerIndices['Estimate'] - 1] = data.estimate || '';
@@ -268,40 +284,20 @@ function createTask(data) {
     rowData[headerIndices['Urgency'] - 1] = urgency;
     rowData[headerIndices['Added date'] - 1] = addedDate;
     rowData[headerIndices['Done date'] - 1] = doneDate;
+    Logger.log('Step: "Prepare Row Data" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
-    // Ensure all columns are filled to match the sheet's structure
     for (var i = 0; i < Object.keys(headerIndices).length; i++) {
       if (rowData[i] === undefined) {
         rowData[i] = '';
       }
     }
 
-    // Write the row data to the sheet
     sheet.getRange(lastRow, 1, 1, Object.keys(headerIndices).length).setValues([rowData]);
+    Logger.log('Step: "Write Data to Sheet" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
     return "Success";
   } catch (error) {
     Logger.log("Error in createTask: " + error.message);
     throw new Error('Failed to create task: ' + error.message);
   }
-}
-
-// Function to focus on the selected row by toggling the "Focus" checkbox
-function focusOnSelected() {
-  var selection = sheet.getActiveRange();
-  
-  if (!selection) {
-    SpreadsheetApp.getUi().alert('Please select a row to focus on.');
-    return;
-  }
-
-  var row = selection.getRow();
-  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  var activeTaskColIndex = headers.indexOf('Focus') + 1;
-
-  // Toggle the "Focus" checkbox for the selected row
-  sheet.getRange(row, activeTaskColIndex).setValue(true);
-
-  // Uncheck other rows
-  uncheckOtherCheckboxes(row, sheet, activeTaskColIndex);
 }
