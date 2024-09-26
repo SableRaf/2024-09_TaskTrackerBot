@@ -27,6 +27,30 @@ function doPost(e) {
   return ContentService.createTextOutput(`Success. Your task was added to the sheet.`);
 }
 
+// Cache headers indices for faster access
+function getCachedHeaders(sheet) {
+  var cache = CacheService.getScriptCache();
+  var cachedHeaders = cache.get("headerIndices");
+
+  if (cachedHeaders) {
+    return JSON.parse(cachedHeaders);
+  }
+
+  // If no cache exists, calculate the headers
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+  // Create an object to store header names with their corresponding indices
+  var headerIndices = {};
+  headers.forEach(function (header, index) {
+    headerIndices[header] = index + 1; // Add +1 to match 1-based Google Sheets indexing
+  });
+
+  // Cache the headerIndices object for 120 minutes (7200 seconds)
+  cache.put("headerIndices", JSON.stringify(headerIndices), 7200);
+
+  return headerIndices;
+}
+
 function parseIncomingData(data) {
   const jsonData = JSON.parse(data);
   
@@ -70,51 +94,35 @@ function openTaskDialog() {
   SpreadsheetApp.getUi().showModalDialog(html, 'New Task');
 }
 
-// Function to set focus to the task input when the dialog opens
-function setFocusToTaskInput() {
-  const taskInput = document.getElementById('taskInput');
-  if (taskInput) {
-    taskInput.focus(); // Set focus on the input field
-  }
-}
-
 // When the sheet gets edited
+// Use cached headers in your onEdit function and other relevant functions
 function onEdit(e) {
-  var sheet = e ? e.source.getActiveSheet() : SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];  // Use the first sheet if no event
+  var sheet = e ? e.source.getActiveSheet() : SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
   
-  // Get the headers from the first row
-  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  
-  // Find the column indices for 'Status', 'Due date', 'Done date', and 'Added date'
-  var statusColIndex = headers.indexOf('Status') + 1;
-  var completionDateColIndex = headers.indexOf('Done date') + 1;
-  var dueDateColIndex = headers.indexOf('Due date') + 1;
-  var urgencyColIndex = headers.indexOf('Urgency') + 1;
-  var addedDateColIndex = headers.indexOf('Added date') + 1;
-  var activeTaskColIndex = headers.indexOf('Focus') + 1;
-  
-  // Get the column and row of the edited cell
+  // Retrieve cached header indices
+  var headerIndices = getCachedHeaders(sheet);
+
   var col = e.range.getColumn();
   var row = e.range.getRow();
 
   // Detect if a checkbox is switched to TRUE and uncheck others (radio button behavior)
-  if (col == activeTaskColIndex && e.oldValue === "false" && e.value === "TRUE") {
-    uncheckOtherCheckboxes(row, sheet, activeTaskColIndex); // Uncheck other checkboxes in the "Focus" column
+  if (col == headerIndices['Focus'] && e.oldValue === "false" && e.value === "TRUE") {
+    uncheckOtherCheckboxes(row, sheet, headerIndices['Focus']);
   }
 
   // Detect if a new row is added and update the "Added date" column
-  if (row > 1 && col == 1 && sheet.getRange(row, 1).getValue() != "") { // Check if first column is filled (assumed new row)
-    updateAddedDate_(sheet, addedDateColIndex, row);
+  if (row > 1 && col == 1 && sheet.getRange(row, 1).getValue() != "") {
+    updateAddedDate_(sheet, headerIndices['Added date'], row);
   }
 
   // Call the updateDateCompleted function if the Status column is edited
-  if (col == statusColIndex) {
-    updateDateCompleted_(sheet, row, statusColIndex, completionDateColIndex);
+  if (col == headerIndices['Status']) {
+    updateDateCompleted_(sheet, row, headerIndices['Status'], headerIndices['Done date']);
   }
 
   // Call the updateUrgency function if the Status or Due Date columns are edited
-  if (col == statusColIndex || col == dueDateColIndex) {
-    updateUrgency_(sheet, headers, row);
+  if (col == headerIndices['Status'] || col == headerIndices['Due date']) {
+    updateUrgency_(sheet, headerIndices, row);
   }
 }
 
@@ -183,28 +191,20 @@ function calculateUrgency_(status, dueDate) {
   }
 }
 
-// Optimized updateUrgency_ function to handle a single row
-function updateUrgency_(sheet, headers, row) {
-  var statusColIndex = headers.indexOf('Status') + 1;
-  var dueDateColIndex = headers.indexOf('Due date') + 1;
-  var urgencyColIndex = headers.indexOf('Urgency') + 1;
-
-  var status = sheet.getRange(row, statusColIndex).getValue();
-  var dueDate = sheet.getRange(row, dueDateColIndex).getValue();
+function updateUrgency_(sheet, headerIndices, row) {
+  var status = sheet.getRange(row, headerIndices['Status']).getValue();
+  var dueDate = sheet.getRange(row, headerIndices['Due date']).getValue();
   var urgency = calculateUrgency_(status, dueDate);
 
   // Set the calculated urgency
-  sheet.getRange(row, urgencyColIndex).setValue(urgency);
+  sheet.getRange(row, headerIndices['Urgency']).setValue(urgency);
 }
 
 // Optimized function to refresh urgency for all tasks
 function refreshUrgency(hideAlert = false) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];  // Get the first sheet by default
-  
-  // Get the headers from the first row
-  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  
-  // Get all data from the sheet at once
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];  
+  var headerIndices = getCachedHeaders(sheet);
+
   var lastRow = sheet.getLastRow();
   if (lastRow < 2) {
     if (!hideAlert) SpreadsheetApp.getUi().alert('No tasks to refresh.');
@@ -212,40 +212,22 @@ function refreshUrgency(hideAlert = false) {
   }
   var dataRange = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
   var data = dataRange.getValues();
-  
-  // Find the column indices for 'Status', 'Due date', and 'Urgency'
-  var statusColIndex = headers.indexOf('Status');
-  var dueDateColIndex = headers.indexOf('Due date');
-  var urgencyColIndex = headers.indexOf('Urgency');
 
-  // Prepare an array to hold updated urgency values
   var updatedUrgency = [];
 
   // Loop through all rows in the data array
   for (var i = 0; i < data.length; i++) {
-    var status = data[i][statusColIndex];
-    var dueDate = data[i][dueDateColIndex];
+    var status = data[i][headerIndices['Status'] - 1];
+    var dueDate = data[i][headerIndices['Due date'] - 1];
     
     // Calculate urgency and update the data array
     updatedUrgency.push([calculateUrgency_(status, dueDate)]);
   }
   
   // Write the updated urgency values back to the sheet in one operation
-  sheet.getRange(2, urgencyColIndex + 1, updatedUrgency.length, 1).setValues(updatedUrgency);
-  
-  // Show a message when refresh is complete
+  sheet.getRange(2, headerIndices['Urgency'], updatedUrgency.length, 1).setValues(updatedUrgency);
+
   if (!hideAlert) SpreadsheetApp.getUi().alert('Urgency has been refreshed for all tasks.');
-}
-
-function updateAddedDate_(sheet, addedDateColIndex, row) {
-  var addedDateCell = sheet.getRange(row, addedDateColIndex);
-
-  // If the "Added date" cell is empty, set the current date
-  if (addedDateCell.getValue() == "") {
-    var currentDate = new Date();
-    var formattedDate = Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM-dd-yyyy");
-    addedDateCell.setValue(formattedDate);
-  }
 }
 
 function createDummyTask(){
@@ -264,20 +246,10 @@ function createDummyTask(){
 function createTask(data) {
   try {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
-    var lastRow = sheet.getLastRow() + 1; // Add to the next row
+    var lastRow = sheet.getLastRow() + 1;
 
-    // Get the headers to find the column indices
-    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-
-    // Column indices (add +1 because JavaScript arrays are 0-based, and Google Sheets are 1-based)
-    var taskCol = headers.indexOf('Task') + 1;
-    var estimateCol = headers.indexOf('Estimate') + 1;
-    var priorityCol = headers.indexOf('Priority') + 1;
-    var statusCol = headers.indexOf('Status') + 1;
-    var dueDateCol = headers.indexOf('Due date') + 1;
-    var urgencyCol = headers.indexOf('Urgency') + 1;
-    var addedDateCol = headers.indexOf('Added date') + 1;
-    var doneDateCol = headers.indexOf('Done date') + 1;
+    // Get cached headers
+    var headerIndices = getCachedHeaders(sheet);
 
     // Automatically add today's date in the "Added date" column
     var currentDate = new Date();
@@ -291,26 +263,26 @@ function createTask(data) {
 
     // Create an array corresponding to the order of columns in the sheet
     var rowData = [];
-    rowData[taskCol - 1] = data.task || '';           // Set task or empty string
-    rowData[estimateCol - 1] = data.estimate || '';   // Set estimate or empty string
-    rowData[priorityCol - 1] = data.priority || '';   // Set priority or empty string
-    rowData[statusCol - 1] = data.status || '';       // Set status or empty string
-    rowData[dueDateCol - 1] = data.dueDate || '';     // Set due date or empty string
-    rowData[urgencyCol - 1] = urgency;                // Set calculated urgency
-    rowData[addedDateCol - 1] = formattedDate;        // Set added date
-    rowData[doneDateCol - 1] = doneDate;              // Set done date if applicable
+    rowData[headerIndices['Task'] - 1] = data.task || '';
+    rowData[headerIndices['Estimate'] - 1] = data.estimate || '';
+    rowData[headerIndices['Priority'] - 1] = data.priority || '';
+    rowData[headerIndices['Status'] - 1] = data.status || '';
+    rowData[headerIndices['Due date'] - 1] = data.dueDate || '';
+    rowData[headerIndices['Urgency'] - 1] = urgency;
+    rowData[headerIndices['Added date'] - 1] = formattedDate;
+    rowData[headerIndices['Done date'] - 1] = doneDate;
 
     // Ensure all columns are filled to match the sheet's structure
-    for (var i = 0; i < headers.length; i++) {
+    for (var i = 0; i < Object.keys(headerIndices).length; i++) {
       if (rowData[i] === undefined) {
         rowData[i] = '';
       }
     }
 
     // Write the entire row of data in one operation
-    sheet.getRange(lastRow, 1, 1, headers.length).setValues([rowData]);
+    sheet.getRange(lastRow, 1, 1, Object.keys(headerIndices).length).setValues([rowData]);
 
-    return "Success"; // Return success for the client-side success handler
+    return "Success";
   } catch (error) {
     Logger.log("Error in createTask: " + error.message);
     throw new Error('Failed to create task: ' + error.message);
