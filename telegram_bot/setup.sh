@@ -27,45 +27,6 @@ while getopts "va" opt; do
   esac
 done
 
-# Check for updates from the remote repository
-echo "Checking for updates from the remote repository..."
-git fetch origin
-
-LOCAL=$(git rev-parse @)
-REMOTE=$(git rev-parse @{u})
-
-if [ "$LOCAL" != "$REMOTE" ]; then
-    echo "Updates are available from the remote repository."
-
-    echo    # Move to a new line
-    # Show how many commits behind the local branch is
-    COMMITS_BEHIND=$(git rev-list --count $LOCAL..$REMOTE)
-    echo "You are $COMMITS_BEHIND commits behind the remote branch."
-
-    # Show the last few commits from the remote
-    echo    # Move to a new line
-    echo "Showing the latest of $COMMITS_BEHIND new commits:"
-    echo    # Move to a new line
-    git log --oneline $LOCAL..$REMOTE -n 3
-
-    # Ask the user if they want to pull the latest changes
-    echo    # Move to a new line
-    read -p "Do you want to pull the latest changes? (y/n): " -n 1 -r
-    echo    # Move to a new line
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo "Pulling the latest changes..."
-        git pull origin
-        if [ $? -ne 0 ]; then
-            echo "Failed to pull the latest changes. Exiting."
-            exit 1
-        fi
-    else
-        echo "Continuing without pulling the changes."
-    fi
-else
-    echo "No updates available. You are up to date."
-fi
-
 # Make the kill_bot_instances.sh script executable if it is not
 if [ ! -x "kill_bot_instances.sh" ]; then
     echo "Making kill_bot_instances.sh executable..."
