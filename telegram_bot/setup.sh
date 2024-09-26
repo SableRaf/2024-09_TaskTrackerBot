@@ -96,9 +96,16 @@ if $USE_VENV; then
   echo "Activating virtual environment..."
   source env/bin/activate
 
-  # Install pip3 in the virtual environment if not present
-  echo "Ensuring pip is available in the virtual environment..."
-  curl https://bootstrap.pypa.io/get-pip.py | python3
+  # Check if pip is installed and up-to-date
+  CURRENT_PIP_VERSION=$(pip --version | awk '{print $2}')
+  LATEST_PIP_VERSION=$(curl -s https://pypi.org/pypi/pip/json | python3 -c "import sys, json; print(json.load(sys.stdin)['info']['version'])")
+
+  if [ "$CURRENT_PIP_VERSION" == "$LATEST_PIP_VERSION" ]; then
+    echo "The latest version of pip ($CURRENT_PIP_VERSION) is already installed."
+  else
+    echo "Updating pip to the latest version..."
+    python3 -m pip install --upgrade pip
+  fi
 fi
 
 # Install dependencies
