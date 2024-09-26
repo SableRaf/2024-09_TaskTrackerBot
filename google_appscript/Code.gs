@@ -1,15 +1,26 @@
 // Code.gs
 
+// Create custom menu item(s)
+function onOpen() {
+  var ui = SpreadsheetApp.getUi();
+  ui.createMenu('Task Manager')
+      .addItem('Create New Task', 'openTaskDialog')
+      .addItem('Focus on Selected', 'focusOnSelected')
+      .addItem('Refresh Urgency', 'refreshUrgency')
+      .addToUi();
+  refreshUrgency(true);
+}
+
 function doPost(e) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-
+  
   // Log the incoming data to see if it is parsed correctly
   Logger.log("Incoming data: " + e.postData.contents);
 
   // Parse the incoming data and add a new row
   const parsedData = parseIncomingData(e.postData.contents);
   Logger.log("Parsed data: " + JSON.stringify(parsedData));
-
+  
   createTask(parsedData);
 
   // Return a success message
@@ -18,7 +29,7 @@ function doPost(e) {
 
 function parseIncomingData(data) {
   const jsonData = JSON.parse(data);
-
+  
   return {
     task: jsonData.task || "No task provided",
     estimate: jsonData.estimate || "No estimate",
@@ -30,7 +41,7 @@ function parseIncomingData(data) {
 
 function testParsingAndAppendTask() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-
+  
   // Simulate incoming JSON data as a string (similar to e.postData.contents)
   const jsonDataString = JSON.stringify({
     task: 'Talk to Chris about the shader tutorial',
@@ -39,20 +50,10 @@ function testParsingAndAppendTask() {
     status: 'Not started',
     dueDate: '2023-10-02'
   });
-
+  
   // Parse the incoming data and append it to the sheet
   const parsedData = parseIncomingData(jsonDataString);
   createTask(parsedData);
-}
-
-// Create custom menu item(s)
-function onOpen() {
-  var ui = SpreadsheetApp.getUi();
-  ui.createMenu('Task Manager')
-      .addItem('Create New Task', 'openTaskDialog')
-      .addItem('Refresh Urgency', 'refreshUrgency')
-      .addToUi();
-  refreshUrgency(true);
 }
 
 // Custom server-side include() function
@@ -65,7 +66,7 @@ function openTaskDialog() {
   var template = HtmlService.createTemplateFromFile('TaskDialog');
   var html = template.evaluate()
       .setWidth(400)
-      .setHeight(300);
+      .setHeight(300); 
   SpreadsheetApp.getUi().showModalDialog(html, 'New Task');
 }
 
@@ -80,20 +81,26 @@ function setFocusToTaskInput() {
 // When the sheet gets edited
 function onEdit(e) {
   var sheet = e ? e.source.getActiveSheet() : SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];  // Use the first sheet if no event
-
+  
   // Get the headers from the first row
   var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-
+  
   // Find the column indices for 'Status', 'Due date', 'Done date', and 'Added date'
   var statusColIndex = headers.indexOf('Status') + 1;
   var completionDateColIndex = headers.indexOf('Done date') + 1;
   var dueDateColIndex = headers.indexOf('Due date') + 1;
   var urgencyColIndex = headers.indexOf('Urgency') + 1;
   var addedDateColIndex = headers.indexOf('Added date') + 1;
-
+  var activeTaskColIndex = headers.indexOf('Focus') + 1;
+  
   // Get the column and row of the edited cell
   var col = e.range.getColumn();
   var row = e.range.getRow();
+
+  // Detect if a checkbox is switched to TRUE and uncheck others (radio button behavior)
+  if (col == activeTaskColIndex && e.oldValue === "false" && e.value === "TRUE") {
+    uncheckOtherCheckboxes(row, sheet, activeTaskColIndex); // Uncheck other checkboxes in the "Focus" column
+  }
 
   // Detect if a new row is added and update the "Added date" column
   if (row > 1 && col == 1 && sheet.getRange(row, 1).getValue() != "") { // Check if first column is filled (assumed new row)
@@ -109,6 +116,22 @@ function onEdit(e) {
   if (col == statusColIndex || col == dueDateColIndex) {
     updateUrgency_(sheet, headers, row);
   }
+}
+
+function uncheckOtherCheckboxes(rowToIgnore, sheet, activeTaskColIndex) {
+  var range = sheet.getRange(2, activeTaskColIndex, sheet.getLastRow() - 1); // All rows in the "Focus" column
+  var values = range.getValues();
+  var updates = [];
+
+  values.forEach(function(row, index) {
+    if (index + 2 !== rowToIgnore && row[0] === true) {
+      updates.push([false]);  // Set to false if it's not the current row
+    } else {
+      updates.push([row[0]]); // Leave the value unchanged
+    }
+  });
+
+  range.setValues(updates); // Write back only the modified checkboxes
 }
 
 function updateDateCompleted_(sheet, row, statusColIndex, completionDateColIndex) {
@@ -177,10 +200,10 @@ function updateUrgency_(sheet, headers, row) {
 // Optimized function to refresh urgency for all tasks
 function refreshUrgency(hideAlert = false) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];  // Get the first sheet by default
-
+  
   // Get the headers from the first row
   var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-
+  
   // Get all data from the sheet at once
   var lastRow = sheet.getLastRow();
   if (lastRow < 2) {
@@ -189,7 +212,7 @@ function refreshUrgency(hideAlert = false) {
   }
   var dataRange = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
   var data = dataRange.getValues();
-
+  
   // Find the column indices for 'Status', 'Due date', and 'Urgency'
   var statusColIndex = headers.indexOf('Status');
   var dueDateColIndex = headers.indexOf('Due date');
@@ -202,14 +225,14 @@ function refreshUrgency(hideAlert = false) {
   for (var i = 0; i < data.length; i++) {
     var status = data[i][statusColIndex];
     var dueDate = data[i][dueDateColIndex];
-
+    
     // Calculate urgency and update the data array
     updatedUrgency.push([calculateUrgency_(status, dueDate)]);
   }
-
+  
   // Write the updated urgency values back to the sheet in one operation
   sheet.getRange(2, urgencyColIndex + 1, updatedUrgency.length, 1).setValues(updatedUrgency);
-
+  
   // Show a message when refresh is complete
   if (!hideAlert) SpreadsheetApp.getUi().alert('Urgency has been refreshed for all tasks.');
 }
@@ -292,4 +315,25 @@ function createTask(data) {
     Logger.log("Error in createTask: " + error.message);
     throw new Error('Failed to create task: ' + error.message);
   }
+}
+
+// Function to focus on the selected row by toggling the "Focus" checkbox
+function focusOnSelected() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var selection = sheet.getActiveRange();
+  
+  if (!selection) {
+    SpreadsheetApp.getUi().alert('Please select a row to focus on.');
+    return;
+  }
+
+  var row = selection.getRow();
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  var activeTaskColIndex = headers.indexOf('Focus') + 1;
+
+  // Toggle the "Focus" checkbox for the selected row
+  sheet.getRange(row, activeTaskColIndex).setValue(true);
+
+  // Uncheck other rows
+  uncheckOtherCheckboxes(row, sheet, activeTaskColIndex);
 }
