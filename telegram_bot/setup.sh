@@ -43,6 +43,16 @@ REMOTE=$(git rev-parse @{u})
 
 if [ "$LOCAL" != "$REMOTE" ]; then
     echo "Updates are available from the remote repository."
+
+    # Show how many commits behind the local branch is
+    COMMITS_BEHIND=$(git rev-list --count $LOCAL..$REMOTE)
+    echo "You are $COMMITS_BEHIND commits behind the remote branch."
+
+    # Show the last few commits from the remote
+    echo "Showing the latest 3 of $COMMITS_BEHIND new commits:"
+    git log --oneline $LOCAL..$REMOTE -n 3
+
+    # Ask the user if they want to pull the latest changes
     read -p "Do you want to pull the latest changes? (y/n): " -n 1 -r
     echo    # Move to a new line
     if [[ $REPLY =~ ^[Yy]$ ]]; then
