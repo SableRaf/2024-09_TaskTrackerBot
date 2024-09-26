@@ -180,3 +180,19 @@ export PATH=$PATH:/home/yourusername/.local/bin
 ```
 
 This will ensure the executables are accessible globally.
+
+#### Issues with the virtual environment
+
+If you encounter issues inside the virtual environment, you can deactivate it using the command:
+
+```bash
+deactivate
+```
+
+This will return you to the system's default Python environment.
+
+If you need to delete the virtual environment, you can simply remove the `env` directory:
+
+```bash
+rm -rf env
+```
