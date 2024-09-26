@@ -51,7 +51,8 @@ if [ "$LOCAL" != "$REMOTE" ]; then
 
     # Show the last few commits from the remote
     echo    # Move to a new line
-    echo "Showing the latest 3 of $COMMITS_BEHIND new commits:"
+    echo "Showing the latest of $COMMITS_BEHIND new commits:"
+    echo    # Move to a new line
     git log --oneline $LOCAL..$REMOTE -n 3
 
     # Ask the user if they want to pull the latest changes
