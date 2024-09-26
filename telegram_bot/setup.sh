@@ -127,7 +127,7 @@ if $AUTOSTART; then
   echo "Setting up autostart for the Telegram bot..."
 
   WORKING_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-  USER="pi"
+  USER="raphael"
 
   # Create systemd service file
   SERVICE_FILE="/etc/systemd/system/telegrambot.service"
