@@ -141,6 +141,26 @@ function onEdit(e) {
   }
 }
 
+// Function to focus on the selected row by toggling the "Focus" checkbox
+function focusOnSelected() {
+  var selection = sheet.getActiveRange();
+  
+  if (!selection) {
+    SpreadsheetApp.getUi().alert('Please select a row to focus on.');
+    return;
+  }
+
+  var row = selection.getRow();
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  var activeTaskColIndex = headers.indexOf('Focus') + 1;
+
+  // Toggle the "Focus" checkbox for the selected row
+  sheet.getRange(row, activeTaskColIndex).setValue(true);
+
+  // Uncheck other rows
+  uncheckOtherCheckboxes(row, sheet, activeTaskColIndex);
+}
+
 function uncheckOtherCheckboxes(rowToIgnore, sheet, activeTaskColIndex) {
   var range = sheet.getRange(2, activeTaskColIndex, sheet.getLastRow() - 1); // All rows in the "Focus" column
   var values = range.getValues();
