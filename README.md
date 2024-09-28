@@ -2,14 +2,49 @@
 
 ## Google App Script
 
-TBD (Create target sheet, Create Google service account, Enable Google Apps Script API, etc.)
+### Step 1: Create the Google Sheet
+
+   - Open the [provided template](https://docs.google.com/spreadsheets/d/1EE29NTNMOcg0yYRAXqDZPSOBJadOVLUY6OQPD0-0d2U/edit?gid=0#gid=0), make a copy (`File > Make a copy`) and save it in your Google Drive.
+   - Rename the sheet to something meaningful (e.g., `Task Tracker`).
+   - Note the Sheet ID from the URL (it will be needed for the bot setup). For example:
+      `https://docs.google.com/spreadsheets/d/<sheet-id>/edit` where `<sheet-id>` is the unique identifier.
+
+> [!NOTE]
+> The App Script will be copied along with the sheet, so you don't need to create a new script.
+
+### Step 2: Deploy the Google App Script
+
+   - In the Google Apps Script editor, click on **Deploy > New deployment**.
+   - Under **Select type**, choose **Web app**.
+   - Fill out the required fields:
+     - **Description**: Describe the deployment (e.g., `Task Tracker Bot Web App`).
+     - **Execute as**: Choose **Me**.
+     - **Who has access**: Choose **Anyone** to allow POST requests from your bot.
+   - Click **Deploy**.
+
+> [!IMPORTANT]
+> If you make any changes to the script, you will need to create a new deployment for the changes to take effect.
+
+**Authorize the App**:
+   - The first time you deploy, you may be asked to **authorize the app**. Follow the prompts to grant the necessary permissions.
+
+**Copy the Deployment URL**:
+   - After deployment, you will receive a **Web App URL**. This is the URL you will use to connect to the Google App Script from your bot.
+   - **Copy the URL** and save it for later use (it will be needed for the bot setup).
+
+## OpenAI API
+
+Go to the [OpenAI API](https://platform.openai.com/docs/guides/authentication) and create an account. Once you have an account, you can generate a Project API key from the dashboard. Note down your API key as it will be needed for the bot setup.
+
+> [!WARNING]
+> Make sure to save your API key in a secure place, treat it like a password and **do not share it with anyone**.
 
 ## Telegram Bot
 
 ### Requirements
 
 - A linux server (a simple Raspberry Pi is fine)
-- Telegram bot token (from BotFather)
+- Telegram bot token ([how to obtain a Telegram bot token](https://core.telegram.org/bots/tutorial#obtain-your-bot-token))
 - OpenAI API key (from the OpenAI dashboard)
 - The ID of the target Sheet (from Google Sheets URL)
 - The URL of the Google Apps Script web app (from the Apps Script editor)
@@ -25,13 +60,14 @@ TBD (Create target sheet, Create Google service account, Enable Google Apps Scri
    cd <repository-directory>
    ```
 
-3. **Create a `.env` file** by copying the sample file:
-
-   ```bash
-   cp .env-template .env
-   ```
+3. **Create a `.env` file** or copy the sample file
 
 4. **Edit the `.env` file** and fill in the required values:
+
+    - `GOOGLE_SHEET_ID`: The ID of the Google Sheet where tasks are tracked.
+    - `OPENAI_API_KEY`: The OpenAI API key obtained from the OpenAI dashboard.
+    - `TELEGRAM_BOT_TOKEN`: The Telegram bot token obtained from BotFather.
+    - `GOOGLE_APP_SCRIPT_URL`: The URL of the Google Apps Script web app deployed in the previous section.
 
 5. **Run the setup script** with arguments to configure the environment and/or auto-start the bot:
 
@@ -58,20 +94,6 @@ TBD (Create target sheet, Create Google service account, Enable Google Apps Scri
   sudo systemctl status telegrambot
   ```
 
-- **View service logs**:
-
-  To check the logs of the bot running as a service:
-
-  ```bash
-  sudo journalctl -u telegrambot.service
-  ```
-
-  To follow logs in real-time:
-
-  ```bash
-  sudo journalctl -u telegrambot.service -f
-  ```
-
 - **Stop the bot service**:
 
   ```bash
@@ -80,7 +102,7 @@ TBD (Create target sheet, Create Google service account, Enable Google Apps Scri
 
   This script will stop the bot service and disable it from auto-starting on boot.
 
-### Managing running instances
+## Managing the Bot Instance(s)
 
 ### Check running instances
 
@@ -99,38 +121,6 @@ sudo kill -9 $(ps aux | grep telegramBot.py | grep -v grep | awk '{print $2}')
 ```
 
 Note: running the setup.sh script should also kill any running instances of the bot.
-
-### Managing the Bot Service
-
-- **View service logs**:
-
-  To check the logs of the bot running as a service:
-
-  ```bash
-  sudo journalctl -u telegrambot.service
-  ```
-
-  To follow logs in real-time:
-
-  ```bash
-  sudo journalctl -u telegrambot.service -f
-  ```
-
-- **Stop the bot service**:
-
-  To stop the bot:
-
-  ```bash
-  sudo systemctl stop telegrambot
-  ```
-
-- **Disable the bot from auto-starting on boot**:
-
-  To prevent the bot from automatically starting after a reboot:
-
-  ```bash
-  sudo systemctl disable telegrambot
-  ```
 
 ### Troubleshooting
 
