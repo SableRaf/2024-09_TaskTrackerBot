@@ -2,7 +2,7 @@ import requests
 from openai import OpenAI
 import os
 import json
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import Update, BotCommand, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
 import logging
 from datetime import datetime
@@ -109,14 +109,45 @@ def create_confirmation_buttons():
     ]
     return InlineKeyboardMarkup(keyboard)
 
-# Define the start function to greet the user
+# Define the start function to greet the user and present the menu
 def start(update: Update, context: CallbackContext):
-    update.message.reply_text('Hello! I am your task management bot. Use /addtask to create a new task.')
+    update.message.reply_text(
+        'Hello! I am your task management bot. Use /addtask to add a new task.',
+    )
 
 # Function to handle adding a new task
 def add_task(update: Update, context: CallbackContext):
     update.message.reply_text('Please provide a task description:')
     context.user_data['awaiting_task'] = True
+
+# Function to handle cancelling the current operation
+def cancel(update: Update, context: CallbackContext):
+    if context.user_data.get('awaiting_task'):
+        # If we're awaiting a task description from the user
+        context.user_data['awaiting_task'] = False
+        update.message.reply_text('Task creation has been cancelled.')
+
+    elif context.user_data.get('task_data'):
+        # If we're awaiting confirmation of a task
+        # Try to get the message ID of the confirmation prompt
+        query = update.callback_query
+
+        if query:
+            query.edit_message_text(text="Task creation has been cancelled.")  # Remove inline buttons and replace message
+        elif context.user_data.get('confirmation_message_id'):
+            # Use the stored message ID to remove the message if a command was used instead of a button
+            chat_id = update.effective_chat.id
+            message_id = context.user_data['confirmation_message_id']
+            context.bot.delete_message(chat_id=chat_id, message_id=message_id)
+            update.message.reply_text("Task creation has been cancelled.")
+
+        # Clear the context since the task process is being cancelled
+        context.user_data.pop('task_data', None)
+        context.user_data.pop('confirmation_message_id', None)
+
+    else:
+        update.message.reply_text('No ongoing task creation to cancel.')
+
 
 # Helper function to format the due date with special cases for today, tomorrow, and past dates
 def format_due_date(due_date_obj):
@@ -157,12 +188,14 @@ def handle_task_input(update: Update, context: CallbackContext):
                 f"*Due Date*: {formatted_due_date}"
             )
 
-            # Ask for confirmation with buttons
-            update.message.reply_text(
+            # Ask for confirmation with buttons and store the message ID
+            confirmation_message = update.message.reply_text(
                 f"Here is the task I understood:\n\n{task_summary}\n\nDo you want to add it?",
                 reply_markup=create_confirmation_buttons(),
                 parse_mode='Markdown'
             )
+            context.user_data['task_data'] = task_data
+            context.user_data['confirmation_message_id'] = confirmation_message.message_id
 
             # Save the task data to context for later confirmation
             context.user_data['task_data'] = task_data
@@ -227,8 +260,6 @@ def format_due_date(due_date_obj):
     else:
         return due_date_obj.strftime('%a, %b %d %Y') + f" ({abs(days_difference)} days ago)"
 
-
-# Modify the main function to include the new command handler and error handler
 def main():
     bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
     if not bot_token:
@@ -238,8 +269,17 @@ def main():
     updater = Updater(bot_token, use_context=True)
 
     dp = updater.dispatcher
+
+    # Set bot commands that will appear in the Telegram menu
+    updater.bot.set_my_commands([
+        BotCommand("start", "Start interacting with the bot"),
+        BotCommand("addtask", "Add a new task"),
+        BotCommand("cancel", "Cancel the current operation")
+    ])
+
     dp.add_handler(CommandHandler("start", start))  # Register the /start command
     dp.add_handler(CommandHandler("addtask", add_task))  # Register the /addtask command
+    dp.add_handler(CommandHandler("cancel", cancel))  # Register the /cancel command
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_task_input))  # Handle user input for task description
     dp.add_handler(CallbackQueryHandler(button_click_handler))  # Handle button clicks for confirmation
     dp.add_error_handler(error_handler)  # Register the error handler
