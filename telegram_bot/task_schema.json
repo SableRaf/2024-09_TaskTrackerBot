@@ -1,0 +1,54 @@
+{
+  "name": "extract_task",
+  "description": "Extracts task details from the user's input.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "task": {
+        "type": "string",
+        "description": "The description of the task"
+      },
+      "estimate": {
+        "type": "string",
+        "enum": [
+          "small",
+          "medium",
+          "large",
+          "break it down"
+        ],
+        "description": "Estimated effort for the task"
+      },
+      "priority": {
+        "type": "string",
+        "enum": [
+          "P0",
+          "P1",
+          "P2",
+          "P3"
+        ],
+        "description": "Priority level of the task"
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "Not started",
+          "In progress",
+          "Blocked",
+          "Completed"
+        ],
+        "description": "Current status of the task"
+      },
+      "dueDate": {
+        "type": "string",
+        "description": "Due date for the task in YYYY-MM-DD format"
+      }
+    },
+    "required": [
+      "task",
+      "estimate",
+      "priority",
+      "status",
+      "dueDate"
+    ]
+  }
+}
