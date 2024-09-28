@@ -187,26 +187,24 @@ def button_click_handler(update: Update, context: CallbackContext):
         query.edit_message_text(text="Task creation canceled.")
 
 # Function to send task data to Google App Script
-def send_task_to_google_script(update, task_data):
+def send_task_to_google_script(query, task_data):
     google_app_script_url = os.getenv('GOOGLE_APP_SCRIPT_URL')
 
     try:
         # Send the request to the Google Apps Script
         response = requests.post(google_app_script_url, json=task_data)
 
-        # Log the status code and full response text
         if response.status_code == 200:
-            update.message.reply_text('Task has been successfully added to the Google Sheet.')
+            query.edit_message_text('Task has been successfully added to the Google Sheet.')
         else:
-            update.message.reply_text(f"Failed to add the task. Server responded with status: {response.status_code}")
+            query.edit_message_text(f"Failed to add the task. Server responded with status: {response.status_code}")
 
         logger.info(f"Response status code: {response.status_code}")
-        logger.info(f"Response text: {response.text}")  # This prints the full response body
+        logger.info(f"Response text: {response.text}")
 
     except Exception as e:
-        # Print any error that occurs
         logger.info(f"Error: {str(e)}")
-        update.message.reply_text(f"Error: {str(e)}")
+        query.edit_message_text(f"Error: {str(e)}")
 
 # Function to handle errors globally
 def error_handler(update: Update, context: CallbackContext):
