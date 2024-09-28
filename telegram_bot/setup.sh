@@ -2,23 +2,28 @@
 
 # Help message
 show_help() {
-    echo "Usage: ./setup.sh [-v] [-a]"
+    echo "Usage: ./setup.sh [-v] [-a] [-g]"
     echo "-v  (Optional) Create and activate virtual environment"
     echo "-a  (Optional) Set bot to autostart on reboot"
+    echo "-g  (Optional) Check for updates from the remote GitHub repository"
 }
 
 # Default values for flags
 USE_VENV=false
 AUTOSTART=false
+GIT_CHECK=false
 
 # Parse command-line arguments
-while getopts "va" opt; do
+while getopts "vag" opt; do
   case ${opt} in
     v )
       USE_VENV=true
       ;;
     a )
       AUTOSTART=true
+      ;;
+    g )
+      GIT_CHECK=true
       ;;
     \? )
       show_help
@@ -27,35 +32,37 @@ while getopts "va" opt; do
   esac
 done
 
-# Check for updates from the remote repository
-echo "Checking for updates from the remote repository at $(git remote get-url origin)"
-git fetch origin
+# Check for updates from the remote repository if -g is provided
+if $GIT_CHECK; then
+    echo "Checking for updates from the remote repository at $(git remote get-url origin)"
+    git fetch origin
 
-LOCAL=$(git rev-parse @)
-REMOTE=$(git rev-parse @{u})
+    LOCAL=$(git rev-parse @)
+    REMOTE=$(git rev-parse @{u})
 
-if [ "$LOCAL" != "$REMOTE" ]; then
-    echo "WARNING: Updates are available from the remote repository."
+    if [ "$LOCAL" != "$REMOTE" ]; then
+        echo "WARNING: Updates are available from the remote repository."
 
-    echo    # Move to a new line
-    # Show how many commits behind the local branch is
-    COMMITS_BEHIND=$(git rev-list --count $LOCAL..$REMOTE)
-    echo "You are $COMMITS_BEHIND commits behind the remote branch."
+        echo    # Move to a new line
+        # Show how many commits behind the local branch is
+        COMMITS_BEHIND=$(git rev-list --count $LOCAL..$REMOTE)
+        echo "You are $COMMITS_BEHIND commits behind the remote branch."
 
-    # Show the last few commits from the remote
-    echo    # Move to a new line
-    echo "Showing the latest of $COMMITS_BEHIND new commits:"
-    echo    # Move to a new line
-    git log --oneline $LOCAL..$REMOTE -n 3
+        # Show the last few commits from the remote
+        echo    # Move to a new line
+        echo "Showing the latest of $COMMITS_BEHIND new commits:"
+        echo    # Move to a new line
+        git log --oneline $LOCAL..$REMOTE -n 3
 
-    echo    # Move to a new line 
-    # Tell the user what to do next
-    echo "To update your local repository, run the following command:"
-    echo "$ git pull"
-    echo    # Move to a new line
+        echo    # Move to a new line 
+        # Tell the user what to do next
+        echo "To update your local repository, run the following command:"
+        echo "$ git pull"
+        echo    # Move to a new line
 
-else
-    echo "No updates available. You are up to date."
+    else
+        echo "No updates available. You are up to date."
+    fi
 fi
 
 # Make the kill_bot_instances.sh script executable if it is not
