@@ -1,4 +1,5 @@
 import os
+import subprocess
 import logging
 from telegram import Update, BotCommand, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
@@ -22,6 +23,15 @@ def create_confirmation_buttons():
         [
             InlineKeyboardButton("Add Task", callback_data='add_task'),
             InlineKeyboardButton("Cancel", callback_data='cancel_task')
+        ]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+def create_update_buttons():
+    keyboard = [
+        [
+            InlineKeyboardButton("Update Now", callback_data='confirm_update'),
+            InlineKeyboardButton("Cancel", callback_data='cancel_update')
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -57,6 +67,44 @@ def cancel(update: Update, context: CallbackContext):
     else:
         update.message.reply_text('No ongoing task creation to cancel.')
 
+def update_bot(update: Update, context: CallbackContext):
+    # Check for updates from the Git remote
+    result = subprocess.run(["git", "fetch", "origin"], capture_output=True, text=True)
+    local = subprocess.run(["git", "rev-parse", "@"], capture_output=True, text=True).stdout.strip()
+    remote = subprocess.run(["git", "rev-parse", "@{u}"], capture_output=True, text=True).stdout.strip()
+
+    if local != remote:
+        commits_behind = subprocess.run(["git", "rev-list", "--count", f"{local}..{remote}"], capture_output=True, text=True).stdout.strip()
+        context.user_data['update_pending'] = True
+
+        update.message.reply_text(
+            f"WARNING: Updates are available. You are {commits_behind} commits behind.\nDo you want to update now?",
+            reply_markup=create_update_buttons()
+        )
+    else:
+        update.message.reply_text("No updates available. You are up to date.")
+
+def button_click_handler(update: Update, context: CallbackContext):
+    query = update.callback_query
+    task_data = context.user_data.get('task_data')
+
+    if query.data == 'add_task' and task_data:
+        send_task_to_google_script(query, task_data)
+    elif query.data == 'cancel_task':
+        query.edit_message_text(text="Task creation canceled.")
+    elif query.data == 'confirm_update' and context.user_data.get('update_pending'):
+        query.edit_message_text(text="Updating the bot...")
+
+        # Pull updates and restart bot
+        result = subprocess.run(["git", "pull"], capture_output=True, text=True)
+        if result.returncode == 0:
+            query.message.reply_text("Update successful. Restarting the bot...")
+            os.execv(__file__, ['python3'] + sys.argv)
+        else:
+            query.message.reply_text("Update failed. Please check the logs.")
+    elif query.data == 'cancel_update':
+        query.edit_message_text(text="Update canceled.")
+
 def handle_task_input(update: Update, context: CallbackContext):
     if context.user_data.get('awaiting_task'):
         task_description = update.message.text
@@ -91,15 +139,6 @@ def handle_task_input(update: Update, context: CallbackContext):
 
         context.user_data['awaiting_task'] = False
 
-def button_click_handler(update: Update, context: CallbackContext):
-    query = update.callback_query
-    task_data = context.user_data.get('task_data')
-
-    if query.data == 'add_task' and task_data:
-        send_task_to_google_script(query, task_data)
-    elif query.data == 'cancel_task':
-        query.edit_message_text(text="Task creation canceled.")
-
 def format_due_date(due_date_obj):
     today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
     due_date_obj = due_date_obj.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -127,12 +166,14 @@ def main():
     updater.bot.set_my_commands([
         BotCommand("start", "Start interacting with the bot"),
         BotCommand("addtask", "Add a new task"),
-        BotCommand("cancel", "Cancel the current operation")
+        BotCommand("cancel", "Cancel the current operation"),
+        BotCommand("update", "Check for bot updates")
     ])
 
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("addtask", add_task))
     dp.add_handler(CommandHandler("cancel", cancel))
+    dp.add_handler(CommandHandler("update", update_bot))
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_task_input))
     dp.add_handler(CallbackQueryHandler(button_click_handler))
 
