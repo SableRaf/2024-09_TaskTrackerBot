@@ -3,13 +3,12 @@ import sys
 import time
 import subprocess
 import logging
-import threading
 from telegram import Update, BotCommand, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
 from google_app_script import send_task_to_google_script
 from task_extraction import extract_task_data
-from datetime import datetime
 from dotenv import load_dotenv
+from datetime import datetime
 from mini_app_server import start_flask
 
 app = Flask(__name__)
