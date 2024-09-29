@@ -86,7 +86,7 @@ def update_bot(update: Update, context: CallbackContext):
         context.user_data['update_pending'] = True
 
         update.message.reply_text(
-            f"WARNING: Updates are available. You are {commits_behind} commits behind.\nDo you want to update now?",
+            f"Updates are available. You are {commits_behind} commits behind.\nDo you want to update now? WARNING: Updates may include untested changes. Use at your own risk. This will restart the bot.",
             reply_markup=create_update_buttons()
         )
     else:
