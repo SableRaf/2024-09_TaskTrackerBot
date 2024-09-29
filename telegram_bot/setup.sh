@@ -126,8 +126,6 @@ WorkingDirectory=$WORKING_DIR
 ExecStart=$WORKING_DIR/env/bin/python3 $WORKING_DIR/telegramBot.py
 Restart=always
 RestartSec=5
-WatchdogSec=10
-TimeoutStopSec=20
 StandardOutput=append:$WORKING_DIR/telegrambot.log
 StandardError=append:$WORKING_DIR/telegrambot.log
 Environment=PYTHONUNBUFFERED=1
