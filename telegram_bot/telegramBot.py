@@ -94,6 +94,19 @@ def update_bot(update: Update, context: CallbackContext):
     else:
         update.message.reply_text("No updates available. You are up to date.")
 
+def restart_bot(update: Update, context: CallbackContext):
+    # Inform the user that the bot is restarting
+    update.message.reply_text("Restarting the bot...")
+
+    # Log the restart action
+    logger.info(f"User {update.effective_user.username} issued a restart command.")
+
+    # Short delay to ensure the message is sent before shutdown
+    time.sleep(2)
+
+    # Exit the script with a non-zero exit code to trigger systemd restart
+    sys.exit(1)
+
 def button_click_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     task_data = context.user_data.get('task_data')
@@ -182,13 +195,15 @@ def main():
         BotCommand("start", "Start interacting with the bot"),
         BotCommand("addtask", "Add a new task"),
         BotCommand("cancel", "Cancel the current operation"),
-        BotCommand("update", "Check for bot updates")
+        BotCommand("update", "Check for bot updates"),
+        BotCommand("restart", "Restart the bot")
     ])
 
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("addtask", add_task))
     dp.add_handler(CommandHandler("cancel", cancel))
     dp.add_handler(CommandHandler("update", update_bot))
+    dp.add_handler(CommandHandler("restart", restart_bot))
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_task_input))
     dp.add_handler(CallbackQueryHandler(button_click_handler))
 
