@@ -10,7 +10,7 @@ from google_app_script import send_task_to_google_script
 from task_extraction import extract_task_data
 from dotenv import load_dotenv
 from datetime import datetime
-from mini_app_server import start_flask
+from mini_app.mini_app_server import start_flask
 
 # Load environment variables from .env file
 load_dotenv()
