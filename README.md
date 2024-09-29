@@ -1,5 +1,16 @@
 # Task Tracker Bot
 
+> [!WARNING]
+> This project is a work in progress and may contain incomplete or untested features. Use at your own risk.
+
+This project is a personal solution for managing my to-do list in Google Sheets more effectively. Don't expect a polished product, but feel free to use it as a starting point for your own Telegram + Google Sheets +  OpenAI API integration.
+
+It includes two main components:
+
+1. **Telegram Bot** (Python): A bot that helps me quickly add tasks by accepting natural language input. I can send a message like "Prepare the presentation for the team meeting next Friday," and the bot extracts relevant details and formats it into structured JSON.
+
+2. **Google App Script** (JavaScript & HTML): Custom scripts to enhance Google Sheets with special menus and behaviors for handling the tasks. The App Script processes the structured JSON data sent by the Telegram bot via POST requests and adds a new row to the sheet.
+
 ## Google App Script
 
 ### Step 1: Create the Google Sheet
