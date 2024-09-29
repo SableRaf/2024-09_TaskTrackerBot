@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 @app.route('/mini_app')
 def serve_mini_app():
-    return send_from_directory('.', 'mini_app.html')
+    return send_from_directory('.', 'index.html')
 
 def start_flask():
-    app.run(host='0.0.0.0', port=80)
+    app.run(host='0.0.0.0', port=8080)

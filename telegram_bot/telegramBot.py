@@ -3,6 +3,7 @@ import sys
 import time
 import subprocess
 import logging
+import threading
 from telegram import Update, BotCommand, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
 from google_app_script import send_task_to_google_script
@@ -10,8 +11,6 @@ from task_extraction import extract_task_data
 from dotenv import load_dotenv
 from datetime import datetime
 from mini_app_server import start_flask
-
-app = Flask(__name__)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -24,7 +23,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def webapp(update: Update, context: CallbackContext):
-    webapp_url = "https://pi-telegramtaskbot.duckdns.org:80/mini_app"
+    webapp_url = "https://pi-telegramtaskbot.duckdns.org:8080/mini_app"
     update.message.reply_text(
         'Click the button below to open the Mini App!',
         reply_markup=InlineKeyboardMarkup([[
