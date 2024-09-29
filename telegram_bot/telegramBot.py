@@ -182,13 +182,13 @@ def main():
         BotCommand("start", "Start interacting with the bot"),
         BotCommand("addtask", "Add a new task"),
         BotCommand("cancel", "Cancel the current operation"),
-        # BotCommand("update", "Check for bot updates")
+        BotCommand("update", "Check for bot updates")
     ])
 
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("addtask", add_task))
     dp.add_handler(CommandHandler("cancel", cancel))
-    # dp.add_handler(CommandHandler("update", update_bot))
+    dp.add_handler(CommandHandler("update", update_bot))
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_task_input))
     dp.add_handler(CallbackQueryHandler(button_click_handler))
 
