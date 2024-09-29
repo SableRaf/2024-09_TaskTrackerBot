@@ -4,7 +4,7 @@
 
 This project is a personal solution for managing my to-do list in Google Sheets more effectively. Don't expect a polished product, but feel free to use it as a starting point for your own Telegram + Google Sheets +  OpenAI API integration.
 
-It includes two main components:
+The system includes two main components:
 
 1. **Telegram Bot** (Python): A bot that helps me quickly add tasks by accepting natural language input. I can send a message like "Prepare the presentation for the team meeting next Friday," and the bot extracts relevant details and formats it into structured JSON.
 
