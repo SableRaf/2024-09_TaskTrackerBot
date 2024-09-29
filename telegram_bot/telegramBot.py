@@ -65,11 +65,19 @@ def cancel(update: Update, context: CallbackContext):
         context.user_data.pop('confirmation_message_id', None)
 
     else:
-        update.message.reply_text('No ongoing task creation to cancel.')
+        update.message.reply_text('No ongoing operation to cancel.')
 
 def update_bot(update: Update, context: CallbackContext):
+    # Debug: User initiated the update command
+    logger.info(f"User {update.effective_user.username} used /update command")
+
     # Check for updates from the Git remote
     result = subprocess.run(["git", "fetch", "origin"], capture_output=True, text=True)
+
+    # Debug: Checking for new commits
+    remote_url = subprocess.run(["git", "remote", "get-url", "origin"], capture_output=True, text=True).stdout.strip()
+    logger.info(f"Checking new commits on {remote_url}")
+
     local = subprocess.run(["git", "rev-parse", "@"], capture_output=True, text=True).stdout.strip()
     remote = subprocess.run(["git", "rev-parse", "@{u}"], capture_output=True, text=True).stdout.strip()
 
