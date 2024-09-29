@@ -1,4 +1,6 @@
 import os
+import sys
+import time
 import subprocess
 import logging
 from telegram import Update, BotCommand, InlineKeyboardMarkup, InlineKeyboardButton
@@ -103,13 +105,18 @@ def button_click_handler(update: Update, context: CallbackContext):
     elif query.data == 'confirm_update' and context.user_data.get('update_pending'):
         query.edit_message_text(text="Updating the bot...")
 
-        # Pull updates and restart bot
+        # Pull updates
         result = subprocess.run(["git", "pull"], capture_output=True, text=True)
         if result.returncode == 0:
             query.message.reply_text("Update successful. Restarting the bot...")
-            os.execv(__file__, ['python3'] + sys.argv)
+
+            # Gracefully exit the bot to allow systemd to restart it
+            time.sleep(2)  # Short delay to ensure messages are sent before shutdown
+            logger.info("Exiting to allow systemd to restart the bot after update.")
+            sys.exit(0)
         else:
             query.message.reply_text("Update failed. Please check the logs.")
+            logger.error(f"Update failed: {result.stderr}")
     elif query.data == 'cancel_update':
         query.edit_message_text(text="Update canceled.")
 
