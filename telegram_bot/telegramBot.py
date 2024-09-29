@@ -3,12 +3,16 @@ import sys
 import time
 import subprocess
 import logging
+import threading
 from telegram import Update, BotCommand, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler
 from google_app_script import send_task_to_google_script
 from task_extraction import extract_task_data
 from datetime import datetime
 from dotenv import load_dotenv
+from mini_app_server import start_flask
+
+app = Flask(__name__)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -19,6 +23,15 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+def webapp(update: Update, context: CallbackContext):
+    webapp_url = "https://pi-telegramtaskbot.duckdns.org:80/mini_app"
+    update.message.reply_text(
+        'Click the button below to open the Mini App!',
+        reply_markup=InlineKeyboardMarkup([[
+            InlineKeyboardButton("Open Mini App", url=webapp_url)
+        ]])
+    )
 
 def create_confirmation_buttons():
     keyboard = [
@@ -188,6 +201,12 @@ def main():
         logger.critical("TELEGRAM_BOT_TOKEN environment variable not set.")
         raise ValueError("TELEGRAM_BOT_TOKEN environment variable not set.")
 
+    # Start Flask server in a new thread
+    flask_thread = threading.Thread(target=start_flask)
+    flask_thread.daemon = True
+    flask_thread.start()
+
+    # Set up the Telegram bot
     updater = Updater(bot_token, use_context=True)
     dp = updater.dispatcher
 
@@ -196,17 +215,21 @@ def main():
         BotCommand("addtask", "Add a new task"),
         BotCommand("cancel", "Cancel the current operation"),
         BotCommand("update", "Check for bot updates"),
-        BotCommand("restart", "Restart the bot")
+        BotCommand("restart", "Restart the bot"),
+        BotCommand("webapp", "Launch the Mini App")
     ])
 
+    # Add command handlers
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("addtask", add_task))
     dp.add_handler(CommandHandler("cancel", cancel))
     dp.add_handler(CommandHandler("update", update_bot))
     dp.add_handler(CommandHandler("restart", restart_bot))
+    dp.add_handler(CommandHandler("webapp", webapp))
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_task_input))
     dp.add_handler(CallbackQueryHandler(button_click_handler))
 
+    # Start polling
     updater.start_polling()
     logger.info("Bot started polling.")
     updater.idle()

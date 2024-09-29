@@ -87,6 +87,14 @@ else
   echo "No requirements.txt found. Make sure the necessary dependencies are installed."
 fi
 
+# Install Flask if not found
+if ! python3 -c "import flask" &> /dev/null; then
+  echo "Flask not found, installing..."
+  pip3 install Flask
+else
+  echo "Flask is already installed."
+fi
+
 # Start the bot only if autostart is not enabled
 if ! $AUTOSTART; then
   echo "Starting the Telegram bot manually..."
