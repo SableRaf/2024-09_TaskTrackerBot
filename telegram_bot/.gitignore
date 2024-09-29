@@ -1,3 +1,4 @@
 .env
 /env/
 telegrambot.service
+/__pycache__/
