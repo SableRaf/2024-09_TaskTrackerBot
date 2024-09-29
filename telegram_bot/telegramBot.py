@@ -23,7 +23,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def webapp(update: Update, context: CallbackContext):
-    webapp_url = "https://pi-telegramtaskbot.duckdns.org:8080/mini_app"
+    webapp_url = "https://pi-telegramtaskbot.duckdns.org:4380/mini_app"
     update.message.reply_text(
         'Click the button below to open the Mini App!',
         reply_markup=InlineKeyboardMarkup([[

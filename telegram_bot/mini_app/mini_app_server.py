@@ -13,7 +13,7 @@ def serve_mini_app():
     return send_from_directory('.', 'index.html')
 
 def start_flask():
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=4380)
 
 if __name__ == "__main__":
     start_flask()
