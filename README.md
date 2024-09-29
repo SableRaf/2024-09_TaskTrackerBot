@@ -1,3 +1,5 @@
+![image](https://github.com/user-attachments/assets/3dbfdcc9-f47b-4679-bea4-a4d9786360fa)
+
 # Task Tracker Bot
 
 > [!WARNING]
