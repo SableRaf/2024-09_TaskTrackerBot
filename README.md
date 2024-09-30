@@ -17,7 +17,7 @@ The system includes two main components:
 
 ### Step 1: Create the Google Sheet
 
-   - Open the [provided template](https://docs.google.com/spreadsheets/d/1EE29NTNMOcg0yYRAXqDZPSOBJadOVLUY6OQPD0-0d2U/edit?gid=0#gid=0), make a copy (`File > Make a copy`) and save it in your Google Drive.
+   - Open the [provided template](https://docs.google.com/spreadsheets/d/1JTji9De7E0-Q834kEz0C9fPk8Q9GdhVvhHmJI5lwbkU/edit?usp=sharing), make a copy (`File > Make a copy`) and save it in your Google Drive.
    - Rename the sheet to something meaningful (e.g., `Task Tracker`).
    - Note the Sheet ID from the URL (it will be needed for the bot setup). For example:
       `https://docs.google.com/spreadsheets/d/<sheet-id>/edit` where `<sheet-id>` is the unique identifier.
