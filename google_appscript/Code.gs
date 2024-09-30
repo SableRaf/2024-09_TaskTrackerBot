@@ -6,17 +6,18 @@ const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
 function onOpen() {
   var start_time = new Date().getTime();
   var ui = SpreadsheetApp.getUi();
-  Logger.log('Step: ""Get UI" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
+  Logger.log('Step: "Get UI" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
   ui.createMenu('Task Manager')
       .addItem('Create New Task', 'openTaskDialog')
       .addItem('Focus on Selected', 'focusOnSelected')
       .addItem('Refresh Urgency', 'refreshUrgency')
+      .addItem('Refresh Cached Headers', 'clearCachedHeaders') 
       .addToUi();
-  Logger.log('Step: ""Add Menu Items" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
+  Logger.log('Step: "Add Menu Items" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
   refreshUrgency(true);
-  Logger.log('Step: ""Refresh Urgency" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
+  Logger.log('Step: "Refresh Urgency" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 }
 
 function openTaskDialog() {
@@ -67,6 +68,14 @@ function getCachedHeaders(sheet) {
 
   return headerIndices;
 }
+
+function clearCachedHeaders() {
+  var cache = CacheService.getScriptCache();
+  cache.remove("headerIndices");
+  Logger.log("Header cache cleared.");
+  SpreadsheetApp.getUi().alert("Header cache has been refreshed.");
+}
+
 
 function parseIncomingData(data) {
   const jsonData = JSON.parse(data);
@@ -298,6 +307,12 @@ function createTask(data) {
     var urgency = data.urgency || calculateUrgency_(data.status, data.dueDate);
     Logger.log('Step: "Calculate Urgency" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
+    Logger.log(`  data.uuid: ${data.uuid}`)
+
+    var uuid = data.uuid || uuidv4();
+
+    Logger.log('Header Indices: ' + JSON.stringify(headerIndices));
+
     var rowData = [];
     rowData[headerIndices['Task'] - 1] = data.task || '';
     rowData[headerIndices['Estimate'] - 1] = data.estimate || '';
@@ -308,6 +323,7 @@ function createTask(data) {
     rowData[headerIndices['Added date'] - 1] = addedDate;
     rowData[headerIndices['Done date'] - 1] = doneDate;
     rowData[headerIndices['Timestamp'] - 1] = addedDatetime;
+    rowData[headerIndices['Unique identifier'] - 1] = uuid;
     Logger.log('Step: "Prepare Row Data" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
     // Ensure that all columns are filled, default to empty strings if undefined
@@ -325,4 +341,11 @@ function createTask(data) {
     Logger.log("Error in createTask: " + error.message);
     throw new Error('Failed to create task: ' + error.message);
   }
+}
+
+// Helper function to generate a UUID (v4)
+function uuidv4() {
+  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
+    (+c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> +c / 4).toString(16)
+  );
 }

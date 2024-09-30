@@ -13,6 +13,8 @@
                       String(currentDate.getMinutes()).padStart(2, '0') + ":" +
                       String(currentDate.getSeconds()).padStart(2, '0');
 
+    formData.uuid = uuidv4();
+
     // Add the timestamp to form data
     formData.formattedDatetime = formattedDatetime;
 
@@ -21,6 +23,8 @@
 
     // Calculate urgency based on status and due date
     formData.urgency = calculateUrgency(formData.status, formData.dueDate);
+
+    console.log('Submitting form data:', formData);
 
     toggleLoading(true);
     animateEllipsis();
@@ -248,5 +252,12 @@
       month: 'short',   // Sep
       day: 'numeric'    // 23
     });
+  }
+
+  // Helper function to generate a UUID (v4)
+  function uuidv4() {
+    return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
+      (+c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> +c / 4).toString(16)
+    );
   }
 </script>
