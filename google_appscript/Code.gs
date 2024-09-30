@@ -23,20 +23,20 @@ function openTaskDialog() {
   var template = HtmlService.createTemplateFromFile('TaskDialog');
   var html = template.evaluate()
       .setWidth(400)
-      .setHeight(300); 
+      .setHeight(300);
   SpreadsheetApp.getUi().showModalDialog(html, 'New Task');
 }
 
-function doPost(e) {  
+function doPost(e) {
   var start_time = new Date().getTime();
-  
+
   Logger.log("Incoming data: " + e.postData.contents);
   Logger.log('Step: "Log Incoming Data" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
   const parsedData = parseIncomingData(e.postData.contents);
   Logger.log("Parsed data: " + JSON.stringify(parsedData));
   Logger.log('Step: "Parse Incoming Data" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
-  
+
   createTask(parsedData);
   Logger.log('Step: "Create Task" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
@@ -70,7 +70,7 @@ function getCachedHeaders(sheet) {
 
 function parseIncomingData(data) {
   const jsonData = JSON.parse(data);
-  
+
   return {
     task: jsonData.task || "No task provided",
     estimate: jsonData.estimate || "No estimate",
@@ -82,7 +82,7 @@ function parseIncomingData(data) {
 
 function testParsingAndAppendTask() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  
+
   // Simulate incoming JSON data as a string (similar to e.postData.contents)
   const jsonDataString = JSON.stringify({
     task: 'Talk to Chris about the shader tutorial',
@@ -91,7 +91,7 @@ function testParsingAndAppendTask() {
     status: 'Not started',
     dueDate: '2023-10-02'
   });
-  
+
   // Parse the incoming data and append it to the sheet
   const parsedData = parseIncomingData(jsonDataString);
   createTask(parsedData);
@@ -107,13 +107,13 @@ function openTaskDialog() {
   var template = HtmlService.createTemplateFromFile('TaskDialog');
   var html = template.evaluate()
       .setWidth(400)
-      .setHeight(300); 
+      .setHeight(300);
   SpreadsheetApp.getUi().showModalDialog(html, 'New Task');
 }
 
 // When the sheet gets edited
 // Use cached headers in your onEdit function and other relevant functions
-function onEdit(e) {  
+function onEdit(e) {
   // Retrieve cached header indices
   var headerIndices = getCachedHeaders(sheet);
 
@@ -144,7 +144,7 @@ function onEdit(e) {
 // Function to focus on the selected row by toggling the "Focus" checkbox
 function focusOnSelected() {
   var selection = sheet.getActiveRange();
-  
+
   if (!selection) {
     SpreadsheetApp.getUi().alert('Please select a row to focus on.');
     return;
@@ -188,7 +188,7 @@ function updateDateCompleted_(sheet, row, statusColIndex, completionDateColIndex
     var currentDate = new Date();
     var formattedDate = Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM-dd-yyyy");
     completionDateCell.setValue(formattedDate);
-    
+
     // Set focus to false
     focusCell.setValue(false);
   }
@@ -240,7 +240,7 @@ function updateUrgency_(sheet, headerIndices, row) {
 }
 
 // Optimized function to refresh urgency for all tasks
-function refreshUrgency(hideAlert = false) { 
+function refreshUrgency(hideAlert = false) {
   var headerIndices = getCachedHeaders(sheet);
 
   var lastRow = sheet.getLastRow();
@@ -257,11 +257,11 @@ function refreshUrgency(hideAlert = false) {
   for (var i = 0; i < data.length; i++) {
     var status = data[i][headerIndices['Status'] - 1];
     var dueDate = data[i][headerIndices['Due date'] - 1];
-    
+
     // Calculate urgency and update the data array
     updatedUrgency.push([calculateUrgency_(status, dueDate)]);
   }
-  
+
   // Write the updated urgency values back to the sheet in one operation
   sheet.getRange(2, headerIndices['Urgency'], updatedUrgency.length, 1).setValues(updatedUrgency);
 
