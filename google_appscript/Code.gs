@@ -291,6 +291,7 @@ function createTask(data) {
 
     var currentDate = new Date();
     var formattedDate = Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM-dd-yyyy");
+    var timestamp = Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
 
     var addedDate = data.addedDate || formattedDate;
     var doneDate = data.doneDate || (data.status === "Completed" ? formattedDate : '');
@@ -308,8 +309,10 @@ function createTask(data) {
     rowData[headerIndices['Urgency'] - 1] = urgency;
     rowData[headerIndices['Added date'] - 1] = addedDate;
     rowData[headerIndices['Done date'] - 1] = doneDate;
+    rowData[headerIndices['Timestamp'] - 1] = timestamp; // Add the timestamp value
     Logger.log('Step: "Prepare Row Data" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
+    // Ensure that all columns are filled, default to empty strings if undefined
     for (var i = 0; i < Object.keys(headerIndices).length; i++) {
       if (rowData[i] === undefined) {
         rowData[i] = '';
