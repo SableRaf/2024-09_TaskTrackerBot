@@ -132,7 +132,7 @@ function onEdit(e) {
 
   // Call the updateDateCompleted function if the Status column is edited
   if (col == headerIndices['Status']) {
-    updateDateCompleted_(sheet, row, headerIndices['Status'], headerIndices['Done date']);
+    updateDateCompleted_(sheet, row, headerIndices['Status'], headerIndices['Done date'], headerIndices['Focus']);
   }
 
   // Call the updateUrgency function if the Status or Due Date columns are edited
@@ -177,16 +177,20 @@ function uncheckOtherCheckboxes(rowToIgnore, sheet, activeTaskColIndex) {
   range.setValues(updates); // Write back only the modified checkboxes
 }
 
-function updateDateCompleted_(sheet, row, statusColIndex, completionDateColIndex) {
-  // Get the status and completion date for the given row
+function updateDateCompleted_(sheet, row, statusColIndex, completionDateColIndex, focusColIndex) {
+  // Get the status, completion date, and focus status for the given row
   var status = sheet.getRange(row, statusColIndex).getValue();
   var completionDateCell = sheet.getRange(row, completionDateColIndex);
+  var focusCell = sheet.getRange(row, focusColIndex);
 
   // If status is 'Completed' and there's no completion date, set the current date
   if (status == "Completed" && completionDateCell.getValue() == "") {
     var currentDate = new Date();
     var formattedDate = Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM-dd-yyyy");
     completionDateCell.setValue(formattedDate);
+    
+    // Set focus to false
+    focusCell.setValue(false);
   }
   // If status is changed away from 'Completed', clear the completion date
   else if (status != "Completed") {
