@@ -30,18 +30,28 @@ function openTaskDialog() {
 
 function doPost(e) {
   var start_time = new Date().getTime();
+  
+  if (!e || !e.postData || !e.postData.contents) {
+    Logger.log("Missing post data.");
+    return ContentService.createTextOutput("Error: Missing post data.");
+  }
 
   Logger.log("Incoming data: " + e.postData.contents);
   Logger.log('Step: "Log Incoming Data" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
-  const parsedData = parseIncomingData(e.postData.contents);
-  Logger.log("Parsed data: " + JSON.stringify(parsedData));
-  Logger.log('Step: "Parse Incoming Data" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
+  try {
+    const parsedData = parseIncomingData(e.postData.contents);
+    Logger.log("Parsed data: " + JSON.stringify(parsedData));
+    Logger.log('Step: "Parse Incoming Data" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
-  createTask(parsedData);
-  Logger.log('Step: "Create Task" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
+    createTask(parsedData);
+    Logger.log('Step: "Create Task" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
-  return ContentService.createTextOutput(`Success. Your task was added to the sheet.`);
+    return ContentService.createTextOutput(`Success. Your task was added to the sheet.`);
+  } catch (error) {
+    Logger.log("Error in doPost: " + error.message);
+    return ContentService.createTextOutput("Error: " + error.message);
+  }
 }
 
 function getCachedHeaders(sheet) {
@@ -195,8 +205,8 @@ function updateDateCompleted_(sheet, row, statusColIndex, completionDateColIndex
   // If status is 'Completed' and there's no completion date, set the current date
   if (status == "Completed" && completionDateCell.getValue() == "") {
     var currentDate = new Date();
-    var formattedDate = Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM-dd-yyyy");
-    completionDateCell.setValue(formattedDate);
+    var doneDate = Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM-dd-yyyy");
+    completionDateCell.setValue(doneDate);
 
     // Set focus to false
     focusCell.setValue(false);
@@ -299,7 +309,7 @@ function createTask(data) {
     Logger.log('Step: "Get Cached Headers" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
     var currentDate = new Date();
-    var addedDate = data.formattedDate || Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM-dd-yyyy");
+    var addedDate = data.addedDate || Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM-dd-yyyy");
     var addedDatetime = data.formattedDatetime || Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "yyyy-MM-dd'T'HH:mm:ss'Z'");
     var doneDate = data.doneDate || (data.status === "Completed" ? addedDate : '');
     Logger.log('Step: "Format Dates" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
@@ -309,7 +319,7 @@ function createTask(data) {
 
     Logger.log(`  data.uuid: ${data.uuid}`)
 
-    var uuid = data.uuid || uuidv4();
+    var uuid = data.uuid || Utilities.getUuid();
 
     Logger.log('Header Indices: ' + JSON.stringify(headerIndices));
 
@@ -341,11 +351,4 @@ function createTask(data) {
     Logger.log("Error in createTask: " + error.message);
     throw new Error('Failed to create task: ' + error.message);
   }
-}
-
-// Helper function to generate a UUID (v4)
-function uuidv4() {
-  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
-    (+c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> +c / 4).toString(16)
-  );
 }
