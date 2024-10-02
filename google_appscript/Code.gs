@@ -173,8 +173,6 @@ function uncheckOtherCheckboxes(rowToIgnore, sheet, activeTaskColIndex) {
   range.setValues(updates); // Write back only the modified checkboxes
 }
 
-function updateDateCompleted_(sheet, row, statusColIndex, completionDateColIndex, focusColIndex) {
-  // Get the status, completion date, and focus status for the given row
 function updateDateCompleted_(sheet, row, statusColIndex, completionDateColIndex, focusColIndex, doneTimestampColIndex) {
   // Get the status, completion date, focus status, and timestamp for the given row
   var status = sheet.getRange(row, statusColIndex).getValue();
