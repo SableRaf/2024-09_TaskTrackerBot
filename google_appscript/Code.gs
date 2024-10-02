@@ -21,13 +21,14 @@ function onOpen() {
   taskManagerMenu.addSubMenu(developerSubMenu).addToUi();
   Logger.log('Step: "Add Menu Items" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
+  // Refresh urgency on opening the sheet
   refreshUrgency(true);
   Logger.log('Step: "Refresh Urgency" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 }
 
 function doPost(e) {
   var start_time = new Date().getTime();
-  
+
   if (!e || !e.postData || !e.postData.contents) {
     Logger.log("Missing post data.");
     return ContentService.createTextOutput("Error: Missing post data.");
@@ -128,7 +129,6 @@ function openTaskDialog() {
 }
 
 // When the sheet gets edited
-// Use cached headers in your onEdit function and other relevant functions
 function onEdit(e) {
   // Retrieve cached header indices
   var headerIndices = getCachedHeaders(sheet);
