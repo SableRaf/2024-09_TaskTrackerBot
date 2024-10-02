@@ -148,7 +148,7 @@ function onEdit(e) {
 
   // Call the updateDateCompleted function if the Status column is edited
   if (col == headerIndices['Status']) {
-    updateDateCompleted_(sheet, row, headerIndices['Status'], headerIndices['Done date'], headerIndices['Focus']);
+    updateDateCompleted_(sheet, row, headerIndices['Status'], headerIndices['Done date'], headerIndices['Focus'], headerIndices['Done timestamp']);
   }
 
   // Call the updateUrgency function if the Status or Due Date columns are edited
@@ -195,22 +195,28 @@ function uncheckOtherCheckboxes(rowToIgnore, sheet, activeTaskColIndex) {
 
 function updateDateCompleted_(sheet, row, statusColIndex, completionDateColIndex, focusColIndex) {
   // Get the status, completion date, and focus status for the given row
+function updateDateCompleted_(sheet, row, statusColIndex, completionDateColIndex, focusColIndex, doneTimestampColIndex) {
+  // Get the status, completion date, focus status, and timestamp for the given row
   var status = sheet.getRange(row, statusColIndex).getValue();
   var completionDateCell = sheet.getRange(row, completionDateColIndex);
   var focusCell = sheet.getRange(row, focusColIndex);
+  var doneTimestampCell = sheet.getRange(row, doneTimestampColIndex);
 
-  // If status is 'Completed' and there's no completion date, set the current date
+  // If status is 'Completed' and there's no completion date, set the current date and time
   if (status == "Completed" && completionDateCell.getValue() == "") {
     var currentDate = new Date();
     var doneDate = Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM-dd-yyyy");
+    var doneTimestamp = Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM-dd-yyyy HH:mm:ss");
     completionDateCell.setValue(doneDate);
+    doneTimestampCell.setValue(doneTimestamp);
 
     // Set focus to false
     focusCell.setValue(false);
   }
-  // If status is changed away from 'Completed', clear the completion date
+  // If status is changed away from 'Completed', clear the completion date and timestamp
   else if (status != "Completed") {
     completionDateCell.setValue("");
+    doneTimestampCell.setValue("");
   }
 }
 
@@ -307,7 +313,7 @@ function createTask(data) {
 
     var currentDate = new Date();
     var addedDate = data.addedDate || Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM-dd-yyyy");
-    var addedDatetime = data.formattedDatetime || Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "yyyy-MM-dd'T'HH:mm:ss'Z'");
+    var addedDatetime = data.formattedDatetime || Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM-dd-yyyy HH:mm:ss");
     var doneDate = data.doneDate || (data.status === "Completed" ? addedDate : '');
     Logger.log('Step: "Format Dates" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
