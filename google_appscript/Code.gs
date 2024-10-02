@@ -8,12 +8,17 @@ function onOpen() {
   var ui = SpreadsheetApp.getUi();
   Logger.log('Step: "Get UI" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
-  ui.createMenu('Task Manager')
-      .addItem('Create New Task', 'openTaskDialog')
-      .addItem('Focus on Selected', 'focusOnSelected')
-      .addItem('Refresh Urgency', 'refreshUrgency')
-      .addItem('Refresh Cached Headers', 'clearCachedHeaders') 
-      .addToUi();
+  // Create the Task Manager menu
+  var taskManagerMenu = ui.createMenu('Task Manager')
+    .addItem('Create New Task', 'openTaskDialog')
+
+  // Create the Developer Features submenu
+  var developerSubMenu = ui.createMenu('Developer Features')
+    .addItem('Refresh Urgency', 'refreshUrgency')
+    .addItem('Refresh Cached Headers', 'clearCachedHeaders');
+
+  // Add Developer Features submenu to Task Manager menu
+  taskManagerMenu.addSubMenu(developerSubMenu).addToUi();
   Logger.log('Step: "Add Menu Items" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
   refreshUrgency(true);
