@@ -25,14 +25,6 @@ function onOpen() {
   Logger.log('Step: "Refresh Urgency" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 }
 
-function openTaskDialog() {
-  var template = HtmlService.createTemplateFromFile('TaskDialog');
-  var html = template.evaluate()
-      .setWidth(400)
-      .setHeight(300);
-  SpreadsheetApp.getUi().showModalDialog(html, 'New Task');
-}
-
 function doPost(e) {
   var start_time = new Date().getTime();
   
@@ -130,8 +122,8 @@ function include(filename) {
 function openTaskDialog() {
   var template = HtmlService.createTemplateFromFile('TaskDialog');
   var html = template.evaluate()
-      .setWidth(400)
-      .setHeight(300);
+    .setWidth(400)
+    .setHeight(300);
   SpreadsheetApp.getUi().showModalDialog(html, 'New Task');
 }
 
