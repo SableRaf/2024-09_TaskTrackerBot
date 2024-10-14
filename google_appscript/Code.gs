@@ -180,8 +180,10 @@ function updateDateCompleted_(sheet, row, statusColIndex, completionDateColIndex
   var focusCell = sheet.getRange(row, focusColIndex);
   var doneTimestampCell = sheet.getRange(row, doneTimestampColIndex);
 
-  // If status is 'Completed' and there's no completion date, set the current date and time
-  if (status == "Completed" && completionDateCell.getValue() == "") {
+  var isFinished = status == "Completed" || status == "Dropped";
+
+  // If status was just set to 'Completed' or 'Dropped' and there's no completion date, set the current date and time
+  if (isFinished && completionDateCell.getValue() == "") {
     var currentDate = new Date();
     var doneDate = Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM-dd-yyyy");
     var doneTimestamp = Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM-dd-yyyy HH:mm:ss");
@@ -191,8 +193,8 @@ function updateDateCompleted_(sheet, row, statusColIndex, completionDateColIndex
     // Set focus to false
     focusCell.setValue(false);
   }
-  // If status is changed away from 'Completed', clear the completion date and timestamp
-  else if (status != "Completed") {
+  // If status is changed away from 'Completed' or 'Dropped', clear the completion date and timestamp
+  else if (!isFinished) {
     completionDateCell.setValue("");
     doneTimestampCell.setValue("");
   }
@@ -292,7 +294,9 @@ function createTask(data) {
     var currentDate = new Date();
     var addedDate = data.addedDate || Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM-dd-yyyy");
     var addedDatetime = data.formattedDatetime || Utilities.formatDate(currentDate, Session.getScriptTimeZone(), "MM-dd-yyyy HH:mm:ss");
-    var doneDate = data.doneDate || (data.status === "Completed" ? addedDate : '');
+    var isFinished = data.status === "Completed" || data.status === "Dropped";
+    var doneDate = data.doneDate || (isFinished ? addedDate : '');
+    var doneDatetime = data.doneDatetime || (isFinished ? addedDatetime : '');
     Logger.log('Step: "Format Dates" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 
     var urgency = data.urgency || calculateUrgency_(data.status, data.dueDate);
@@ -314,6 +318,7 @@ function createTask(data) {
     rowData[headerIndices['Added date'] - 1] = addedDate;
     rowData[headerIndices['Done date'] - 1] = doneDate;
     rowData[headerIndices['Timestamp'] - 1] = addedDatetime;
+    rowData[headerIndices['Done timestamp'] - 1] = doneDatetime; 
     rowData[headerIndices['Unique identifier'] - 1] = uuid;
     Logger.log('Step: "Prepare Row Data" Execution time: ' + (new Date().getTime() - start_time) + ' ms');
 

@@ -5,7 +5,7 @@
 
     // Format the current date for "Added date" and "Timestamp"
     const currentDate = new Date();
-    const formattedDate = currentDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+    const addedDate = currentDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
     const formattedDatetime = currentDate.getFullYear() + "-" +
                       String(currentDate.getMonth() + 1).padStart(2, '0') + "-" +
                       String(currentDate.getDate()).padStart(2, '0') + " " +
@@ -19,7 +19,8 @@
     formData.formattedDatetime = formattedDatetime;
 
     // Determine if task is completed and set the "Done date"
-    formData.doneDate = formData.status === "Completed" ? formattedDate : '';
+    var isFinished = formData.status === "Completed" || formData.status === "Dropped"
+    formData.doneDate = isFinished ? addedDate : '';
 
     // Calculate urgency based on status and due date
     formData.urgency = calculateUrgency(formData.status, formData.dueDate);
@@ -40,7 +41,7 @@
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Normalize to midnight for accurate comparison
 
-    if (status === "Completed") {
+    if (status === "Completed"|| status === "Dropped") {
       return ""; // Clear urgency if status is "Completed"
     }
 
